@@ -1,0 +1,249 @@
+.contract-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contract-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.contract-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.contract-title-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.contract-icon {
+  font-size: 24px;
+  margin-top: 2px;
+}
+
+.contract-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contract-number {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.contract-client {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.contract-status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.contract-status-badge.activo {
+  background-color: #1e3a5f;
+  color: white;
+}
+
+.contract-status-badge.finalizado {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.contract-status-badge.por-vencer {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.contract-status-badge.pendiente {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.contract-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contract-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+}
+
+.detail-icon {
+  font-size: 18px;
+  margin-top: 2px;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.contract-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.detail-item-small {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detail-icon-small {
+  font-size: 16px;
+  margin-top: 2px;
+}
+
+.detail-content-small {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.detail-label-small {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.detail-value-small {
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.contract-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.daily-rate {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.contract-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-contract-details {
+  padding: 10px 20px;
+  background-color: white;
+  color: #1e293b;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-contract-details:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.btn-contract-menu {
+  padding: 10px 14px;
+  background-color: #f1f5f9;
+  color: #475569;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-contract-menu:hover {
+  background-color: #e2e8f0;
+}
+
+@media (max-width: 768px) {
+  .contract-card {
+    padding: 16px;
+  }
+
+  .contract-number {
+    font-size: 16px;
+  }
+
+  .contract-client {
+    font-size: 13px;
+  }
+
+  .contract-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .contract-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .contract-actions {
+    width: 100%;
+  }
+
+  .btn-contract-details {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,146 @@
+.report-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.report-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.report-card-content {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.report-icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background-color: #f1f5f9;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.report-icon {
+  font-size: 32px;
+}
+
+.report-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.report-description {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.report-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.report-meta-item {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.report-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-download,
+.btn-generate {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-download {
+  background-color: white;
+  color: #475569;
+  border: 2px solid #e2e8f0;
+}
+
+.btn-download:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.btn-generate {
+  background-color: #1e3a5f;
+  color: white;
+  border: none;
+}
+
+.btn-generate:hover {
+  background-color: #2c5282;
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .report-card {
+    padding: 16px;
+  }
+
+  .report-card-content {
+    flex-direction: column;
+  }
+
+  .report-icon-wrapper {
+    width: 50px;
+    height: 50px;
+  }
+
+  .report-icon {
+    font-size: 24px;
+  }
+
+  .report-title {
+    font-size: 16px;
+  }
+
+  .report-actions {
+    flex-direction: column;
+  }
+
+  .btn-download,
+  .btn-generate {
+    width: 100%;
+  }
+}
