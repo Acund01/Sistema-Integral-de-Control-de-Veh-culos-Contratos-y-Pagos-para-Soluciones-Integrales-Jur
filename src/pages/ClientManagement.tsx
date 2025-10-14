@@ -5,9 +5,10 @@ import type { Client, ClientStats } from '../types/client';
 
 interface ClientManagementProps {
   clients?: Client[];
+  onNavigate?: (page: string) => void;
 }
 
-const ClientManagement: React.FC<ClientManagementProps> = ({ clients = [] }) => {
+const ClientManagement: React.FC<ClientManagementProps> = ({ clients = [],onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const stats: ClientStats = {
@@ -24,8 +25,8 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ clients = [] }) => 
     client.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleNewClient = () => {
-    console.log('Crear nuevo cliente');
+    const handleNewClient = () => {
+    onNavigate?.('register-client');
   };
 
   const handleClientMenu = (clientId: string) => {

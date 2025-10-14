@@ -21,7 +21,6 @@ function App() {
   };
 
   const handleLogin = (username: string, password: string) => {
-    // Credenciales de prueba
     if (username === 'admin' && password === 'admin123') {
       setUser({
         username: username,
@@ -36,7 +35,6 @@ function App() {
   };
 
   const handleAddClient = (client: Partial<Client> & { nombres?: string; apellidos?: string; correo?: string; telefono?: string; ciudad?: string; }) => {
-    // asignar id simple y mapear campos del formulario
     const newClient: Client = {
       id: Date.now().toString(),
       name: `${client.nombres || ''} ${client.apellidos || ''}`.trim() || (client.name || 'Sin Nombre'),
@@ -50,12 +48,10 @@ function App() {
     setActiveMenu('clientes');
   };
 
-  // Si no hay usuario autenticado, mostrar Login
   if (!user) {
     return <Login onLogin={handleLogin} />;
   }
 
-  // Si hay usuario autenticado, mostrar la aplicación
   return (
     <div className="app-container">
       <Sidebar 
@@ -65,11 +61,11 @@ function App() {
         user={user}
       />
       <main className="main-content">
-  {activeMenu === 'dashboard' && <Dashboard onNavigate={(menuId: string) => setActiveMenu(menuId)} />}
-  {activeMenu === 'clientes' && <ClientManagement clients={clients} />}
-  {activeMenu === 'register-client' && <RegisterClient onNavigate={(menuId: string) => setActiveMenu(menuId)} onAddClient={handleAddClient} />}
-          {activeMenu === 'vehiculos' && <VehicleManagement />}
-          {activeMenu === 'agregar-vehiculo' && <VehicleManagement startAdding={true} />}
+        {activeMenu === 'dashboard' && <Dashboard onNavigate={handleMenuClick} />}
+        {activeMenu === 'clientes' && <ClientManagement clients={clients} onNavigate={handleMenuClick} />}
+        {activeMenu === 'register-client' && <RegisterClient onNavigate={handleMenuClick} onAddClient={handleAddClient} />}
+        {activeMenu === 'vehiculos' && <VehicleManagement />}
+        {activeMenu === 'agregar-vehiculo' && <VehicleManagement startAdding={true} />}
         {activeMenu === 'contratos' && <ContractManagement />}
         {activeMenu === 'reportes' && <Reports />}
       </main>
