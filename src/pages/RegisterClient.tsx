@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import '../styles/RegisterClient.css';
+import type { Client } from '../types/client';
 
 interface RegisterClientProps {
   onNavigate?: (menuId: string) => void;
+  onAddClient?: (client: Partial<Client> & { nombres?: string; apellidos?: string; correo?: string; telefono?: string; ciudad?: string; }) => void;
 }
 
-const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate }) => {
+const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient }) => {
   const [clientType, setClientType] = useState<'natural' | 'company'>('natural');
 
   // Datos comunes
@@ -71,8 +73,9 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Registrar cliente:', clientType, form);
-    // Aquí podrías enviar los datos al backend
-    // Después de registrar, volver al listado o dashboard
+    // Pasar al handler del padre para agregar al listado
+    onAddClient?.(form);
+    // Después de registrar, volver al listado
     onNavigate?.('clientes');
   };
 

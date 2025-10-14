@@ -3,7 +3,11 @@ import ClientCard from '../components/ClientCard';
 import '../styles/ClientManagement.css';
 import type { Client, ClientStats } from '../types/client';
 
-const ClientManagement: React.FC = () => {
+interface ClientManagementProps {
+  clients?: Client[];
+}
+
+const ClientManagement: React.FC<ClientManagementProps> = ({ clients = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const stats: ClientStats = {
@@ -12,44 +16,7 @@ const ClientManagement: React.FC = () => {
     newThisMonth: 12,
   };
 
-  const clients: Client[] = [
-    {
-      id: '1',
-      name: 'Juan Pérez García',
-      email: 'juan.perez@email.com',
-      phone: '+51 1 234-5678',
-      location: 'Lima',
-      contracts: 2,
-      status: 'Activo',
-    },
-    {
-      id: '2',
-      name: 'María González López',
-      email: 'maria.gonzalez@email.com',
-      phone: '+51 1 876-5432',
-      location: 'Arequipa',
-      contracts: 1,
-      status: 'Activo',
-    },
-    {
-      id: '3',
-      name: 'Carlos Rodríguez Sánchez',
-      email: 'carlos.rodriguez@email.com',
-      phone: '+51 44 555-123',
-      location: 'Trujillo',
-      contracts: 0,
-      status: 'Inactivo',
-    },
-    {
-      id: '4',
-      name: 'Ana Martínez Flores',
-      email: 'ana.martinez@email.com',
-      phone: '+51 84 987-654',
-      location: 'Cusco',
-      contracts: 3,
-      status: 'Activo',
-    },
-  ];
+  // `clients` prop is the source of truth; if empty, you may show a placeholder list or none.
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,6 +43,7 @@ const ClientManagement: React.FC = () => {
           <h1 className="page-title">Gestión de Clientes</h1>
           <p className="page-subtitle">Administra la información de tus clientes</p>
         </div>
+        
         <button className="btn-primary" onClick={handleNewClient}>
           <span className="btn-icon">+</span>
           Nuevo Cliente

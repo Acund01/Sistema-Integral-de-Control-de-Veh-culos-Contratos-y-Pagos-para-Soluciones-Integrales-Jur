@@ -48,7 +48,7 @@
   margin-bottom: 1rem;
 }
 
-/* icons are included inline as emoji in the section titles */
+
 
 .field-row {
   display: grid;
@@ -66,6 +66,8 @@
 
 .field-col-full {
   grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
 }
 
 label {
@@ -84,7 +86,12 @@ input, select, textarea {
   font-size: 0.95rem;
 }
 
-textarea { min-height: 80px; }
+textarea {
+  min-height: 80px;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
 
 .form-actions {
   display: flex;

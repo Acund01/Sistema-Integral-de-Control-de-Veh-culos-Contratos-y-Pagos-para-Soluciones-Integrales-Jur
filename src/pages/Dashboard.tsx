@@ -119,6 +119,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       return;
     }
 
+    // Si se selecciona 'Agregar Vehículo' (id '2'), navegar directamente al formulario de agregar vehículo
+    if (actionId === '2') {
+      onNavigate?.('agregar-vehiculo');
+      return;
+    }
+
     // Lógica por defecto para otras acciones
     // (por ejemplo, abrir modales o navegar a otras secciones)
   };
