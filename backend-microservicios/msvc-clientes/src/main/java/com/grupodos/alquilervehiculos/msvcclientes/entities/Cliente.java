@@ -1,12 +1,7 @@
 package com.grupodos.alquilervehiculos.msvcclientes.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Column;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
+import com.grupodos.alquilervehiculos.msvcclientes.entities.enums.TipoCliente;
+import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -20,10 +15,16 @@ public abstract class Cliente {
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_cliente", nullable = false)
+    private TipoCliente tipoCliente;
+
+    @Column(unique = true)
     private String correo;
 
+    @Column(nullable = false)
     private String telefono;
+
     private String direccion;
 
     @Column(name = "creado_en")
@@ -37,6 +38,12 @@ public abstract class Cliente {
     }
     public void setId(UUID id) {
         this.id = id;
+    }
+    public TipoCliente getTipoCliente() {
+        return tipoCliente;
+    }
+    public void setTipoCliente(TipoCliente tipoCliente) {
+        this.tipoCliente = tipoCliente;
     }
     public String getCorreo() {
         return correo;

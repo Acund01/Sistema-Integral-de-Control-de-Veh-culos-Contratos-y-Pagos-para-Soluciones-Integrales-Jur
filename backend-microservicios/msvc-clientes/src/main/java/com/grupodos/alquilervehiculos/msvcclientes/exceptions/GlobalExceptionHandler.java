@@ -2,42 +2,66 @@ package com.grupodos.alquilervehiculos.msvcclientes.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 
-import java.time.OffsetDateTime;
-import java.util.HashMap;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<?> handleNotFound(ResourceNotFoundException ex) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", OffsetDateTime.now());
-        error.put("status", HttpStatus.NOT_FOUND.value());
-        error.put("error", "Recurso no encontrado");
-        error.put("message", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> manejarRecursoNoEncontrado(
+            RecursoNoEncontradoException ex, WebRequest request) {
+
+        return construirRespuesta(
+                HttpStatus.NOT_FOUND,
+                "Recurso no encontrado",
+                ex.getMessage(),
+                request
+        );
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", OffsetDateTime.now());
-        error.put("status", HttpStatus.BAD_REQUEST.value());
-        error.put("error", "Error de validacion");
+    @ExceptionHandler(ValidacionException.class)
+    public ResponseEntity<Map<String, Object>> manejarValidacion(
+            ValidacionException ex, WebRequest request) {
 
-        Map<String, String> fieldErrors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach( e ->
-                fieldErrors.put(e.getField(), e.getDefaultMessage())
+        return construirRespuesta(
+                HttpStatus.BAD_REQUEST,
+                "Error de validación",
+                ex.getMessage(),
+                request
         );
+    }
 
-        error.put("message", "Los datos enviados no son validos");
-        error.put("errors", fieldErrors);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> manejarErrorGeneral(
+            Exception ex, WebRequest request) {
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return construirRespuesta(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Error interno del servidor",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    private ResponseEntity<Map<String, Object>> construirRespuesta(
+            HttpStatus status,
+            String error,
+            String mensaje,
+            WebRequest request) {
+
+        Map<String, Object> cuerpo = new LinkedHashMap<>();
+        cuerpo.put("timestamp", LocalDateTime.now());
+        cuerpo.put("status", status.value());
+        cuerpo.put("error", error);
+        cuerpo.put("mensaje", mensaje);
+        cuerpo.put("path", request.getDescription(false).replace("uri=", ""));
+
+        return ResponseEntity.status(status).body(cuerpo);
     }
 }

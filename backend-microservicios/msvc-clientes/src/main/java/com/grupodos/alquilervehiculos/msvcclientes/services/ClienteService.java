@@ -1,19 +1,24 @@
 package com.grupodos.alquilervehiculos.msvcclientes.services;
 
-import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteEmpresaRequestDto;
-import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteNaturalRequestDto;
+import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteEmpresaDto;
+import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteNaturalDto;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.Cliente;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.ClienteEmpresa;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.ClienteNatural;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-public interface ClienteService<T, Dto> {
-    List<T> listarTodos();
-    T obtenerPorId(UUID id);
-    T crear(Dto dto);
-    T actualizar(UUID id, Dto dto);
-    void eliminar(UUID id);
+public interface ClienteService {
+
+    List<Cliente> findAll();
+    List<Cliente> findAllActivos();
+    List<Cliente> findAllInactivos();
+    Cliente findById(UUID id);
+    ClienteNatural createNatural(ClienteNaturalDto dto);
+    ClienteEmpresa createEmpresa(ClienteEmpresaDto dto);
+    ClienteNatural updateNatural(UUID id, ClienteNaturalDto dto);
+    ClienteEmpresa updateEmpresa(UUID id, ClienteEmpresaDto dto);
+    void delete(UUID id);
+
 }
