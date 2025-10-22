@@ -1,5 +1,6 @@
 package com.grupodos.alquilervehiculos.msvcclientes.controllers;
 
+import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteContratoDto;
 import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteEmpresaDto;
 import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteNaturalDto;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.Cliente;
@@ -72,5 +73,12 @@ public class ClienteController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         clienteService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    //Feign client contratos
+    @GetMapping("/contratos/{id}")
+    public ResponseEntity<ClienteContratoDto> obtenerParaContrato(@PathVariable UUID id) {
+        ClienteContratoDto dto = clienteService.obtenerClienteParaContrato(id);
+        return ResponseEntity.ok(dto);
     }
 }
