@@ -70,7 +70,7 @@ public class MantenimientoService {
         Vehiculo vehiculo = m.getVehiculo();
         vehiculo.setEstado("DISPONIBLE");
         vehiculoRepository.save(vehiculo);
-
+        m.setFinalizado(true);
         return mantenimientoRepository.save(m);
     }
 
@@ -79,14 +79,13 @@ public class MantenimientoService {
         Mantenimiento m = mantenimientoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mantenimiento no encontrado"));
 
-        // Opcional: si quieres revertir estado del vehículo al eliminar mantenimiento
+        // revertir estado del vehículo al eliminar mantenimiento
         Vehiculo vehiculo = m.getVehiculo();
         if ("MANTENIMIENTO".equals(vehiculo.getEstado())) {
             vehiculo.setEstado("DISPONIBLE");
             vehiculoRepository.save(vehiculo);
         }
-
-        mantenimientoRepository.deleteById(id);
+        mantenimientoRepository.save(m);
     }
     
 }

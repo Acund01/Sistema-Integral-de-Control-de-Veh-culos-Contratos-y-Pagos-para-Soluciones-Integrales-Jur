@@ -1,6 +1,7 @@
 package com.grupodos.alquilervehiculos.msvc_vehiculos.repositories;
 
 import com.grupodos.alquilervehiculos.msvc_vehiculos.entities.Vehiculo;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,5 +13,5 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, UUID> {
 
     List<Vehiculo> findByModeloMarcaId(Long marcaId);
     List<Vehiculo> findByTipoVehiculoId(Long tipoId);
-
+    boolean existsByPlaca(String placa);
 }
