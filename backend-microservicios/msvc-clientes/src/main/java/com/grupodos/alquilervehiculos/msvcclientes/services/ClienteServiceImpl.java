@@ -1,10 +1,13 @@
 package com.grupodos.alquilervehiculos.msvcclientes.services;
 
+import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteContratoDto;
 import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteEmpresaDto;
 import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteNaturalDto;
+import com.grupodos.alquilervehiculos.msvcclientes.dto.RepresentanteDto;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.Cliente;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.ClienteEmpresa;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.ClienteNatural;
+import com.grupodos.alquilervehiculos.msvcclientes.entities.Representante;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.enums.TipoCliente;
 import com.grupodos.alquilervehiculos.msvcclientes.exceptions.RecursoNoEncontradoException;
 import com.grupodos.alquilervehiculos.msvcclientes.repositories.ClienteEmpresaRepository;
@@ -117,4 +120,47 @@ public class ClienteServiceImpl implements ClienteService {
         clienteRepository.save(c);
     }
 
+    // Feign client service
+    public ClienteContratoDto obtenerClienteParaContrato(UUID id) {
+        Cliente c = clienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+
+        if (c.getTipoCliente() == TipoCliente.NATURAL) {
+            ClienteNatural cn = (ClienteNatural) c;
+            return new ClienteContratoDto(
+                    cn.getId(),
+                    "NATURAL",
+                    cn.getNombre(),
+                    cn.getApellido(),
+                    cn.getTipoDocumento(),
+                    cn.getNumeroDocumento(),
+                    null,
+                    null,
+                    null
+            );
+        } else {
+            ClienteEmpresa ce = (ClienteEmpresa) c;
+            Representante r = ce.getRepresentante();
+            RepresentanteDto repDto = new RepresentanteDto(
+                    r.getNombre(),
+                    r.getApellido(),
+                    r.getTipoDocumento(),
+                    r.getNumeroDocumento(),
+                    r.getCargo(),
+                    r.getCorreo(),
+                    r.getTelefono()
+            );
+            return new ClienteContratoDto(
+                    ce.getId(),
+                    "EMPRESA",
+                    null,
+                    null,
+                    null,
+                    null,
+                    ce.getRazonSocial(),
+                    ce.getRuc(),
+                    repDto
+            );
+        }
+    }
 }

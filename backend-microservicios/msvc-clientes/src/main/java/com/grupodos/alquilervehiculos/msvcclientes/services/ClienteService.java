@@ -1,5 +1,6 @@
 package com.grupodos.alquilervehiculos.msvcclientes.services;
 
+import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteContratoDto;
 import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteEmpresaDto;
 import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteNaturalDto;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.Cliente;
@@ -21,4 +22,5 @@ public interface ClienteService {
     ClienteEmpresa updateEmpresa(UUID id, ClienteEmpresaDto dto);
     void delete(UUID id);
 
+    ClienteContratoDto obtenerClienteParaContrato(UUID id);
 }
