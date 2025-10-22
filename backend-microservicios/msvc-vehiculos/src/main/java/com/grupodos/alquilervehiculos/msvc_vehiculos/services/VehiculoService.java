@@ -44,6 +44,10 @@ public class VehiculoService {
     }
 
     public Vehiculo crearVehiculo(VehiculoRequestDto dto) {
+        if (vehiculoRepository.existsByPlaca(dto.placa())) {
+            throw new IllegalArgumentException("Ya existe un vehículo con la placa: " + dto.placa());
+        }
+
         Modelo modelo = modeloRepository.findById(dto.modeloId())
                 .orElseThrow(() -> new RuntimeException("Modelo no encontrado"));
         TipoVehiculo tipo = tipoVehiculoRepository.findById(dto.tipoVehiculoId())
@@ -56,8 +60,8 @@ public class VehiculoService {
         vehiculo.setAnioFabricacion(dto.anioFabricacion());
         vehiculo.setCombustible(dto.combustible());
         vehiculo.setDescripcion(dto.descripcion());
-        vehiculo.setEstado(dto.estado());
-        vehiculo.setActivo(dto.activo());
+        vehiculo.setEstado("DISPONIBLE");
+        vehiculo.setActivo(true);
         vehiculo.setCreadoEn(OffsetDateTime.now());
 
         return vehiculoRepository.save(vehiculo);
@@ -77,15 +81,22 @@ public class VehiculoService {
         existente.setAnioFabricacion(dto.anioFabricacion());
         existente.setCombustible(dto.combustible());
         existente.setDescripcion(dto.descripcion());
-        existente.setEstado(dto.estado());
-        existente.setActivo(dto.activo());
 
         return vehiculoRepository.save(existente);
     }
 
     public void eliminarVehiculo(UUID id) {
-        vehiculoRepository.deleteById(id);
+        Vehiculo existente = obtenerPorId(id);
+
+        existente.setActivo(false);
+        vehiculoRepository.save(existente);
     }
 
+    //actualizar estado feign
+    public Vehiculo actualizarEstado(UUID id, String estado) {
+        Vehiculo vehiculo = obtenerPorId(id);
+        vehiculo.setEstado(estado);
+        return vehiculoRepository.save(vehiculo);
+    }
 
 }

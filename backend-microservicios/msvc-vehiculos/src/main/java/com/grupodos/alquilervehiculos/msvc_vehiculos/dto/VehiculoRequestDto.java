@@ -20,10 +20,6 @@ public record VehiculoRequestDto (
     @NotBlank(message = "El tipo de combustible es obligatorio")
     String combustible,
 
-    String descripcion,
-
-    String estado,
-
-    boolean activo
+    String descripcion
 
     ) {}
