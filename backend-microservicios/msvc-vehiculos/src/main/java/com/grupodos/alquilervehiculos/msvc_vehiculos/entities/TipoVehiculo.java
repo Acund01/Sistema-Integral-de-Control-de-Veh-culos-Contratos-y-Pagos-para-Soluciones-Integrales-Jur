@@ -1,11 +1,16 @@
 package com.grupodos.alquilervehiculos.msvc_vehiculos.entities;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "tipo_vehiculos")
+@Getter
+@Setter
+@NoArgsConstructor
 public class TipoVehiculo {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_tipo")
@@ -15,24 +20,4 @@ public class TipoVehiculo {
     private String nombre;
 
     private String descripcion;
-
-    public Integer getId() {
-        return id;
-    }
-    public void setId(Integer id) {
-        this.id = id;
-    }
-    public String getNombre() {
-        return nombre;
-    }
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-    public String getDescripcion() {
-        return descripcion;
-    }
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
 }
