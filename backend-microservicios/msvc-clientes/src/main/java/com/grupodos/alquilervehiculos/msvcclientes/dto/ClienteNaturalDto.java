@@ -17,7 +17,6 @@ public record ClienteNaturalDto(
 
         String correo,
         @NotBlank
-
         String telefono,
         String direccion
 ) {}

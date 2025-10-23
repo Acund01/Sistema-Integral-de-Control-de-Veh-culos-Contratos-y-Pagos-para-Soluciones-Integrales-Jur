@@ -33,6 +33,7 @@ public abstract class Cliente {
     @Column(nullable = false)
     private boolean activo;
 
+    // Getters and setters
     public UUID getId() {
         return id;
     }
@@ -75,5 +76,4 @@ public abstract class Cliente {
     public void setActivo(boolean activo) {
         this.activo = activo;
     }
-
 }

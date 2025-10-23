@@ -23,6 +23,7 @@ public class ClienteEmpresa extends Cliente {
     @JoinColumn(name = "representante_id", referencedColumnName = "id")
     private Representante representante;
 
+    // Getters and setters
     public String getRazonSocial() {
         return razonSocial;
     }
@@ -53,5 +54,4 @@ public class ClienteEmpresa extends Cliente {
     public void setRepresentante(Representante representante) {
         this.representante = representante;
     }
-
 }
