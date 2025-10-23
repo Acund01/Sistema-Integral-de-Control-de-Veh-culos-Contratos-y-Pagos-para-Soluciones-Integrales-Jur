@@ -1,13 +1,21 @@
 package com.grupodos.alquilervehiculos.msvc_vehiculos.entities;
 
+import com.grupodos.alquilervehiculos.msvc_vehiculos.entities.enums.EstadoVehiculo;
+import com.grupodos.alquilervehiculos.msvc_vehiculos.entities.enums.TipoCombustible;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "vehiculos")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Vehiculo {
-
     @Id
     @GeneratedValue
     @Column(name = "id_vehiculo")
@@ -27,8 +35,9 @@ public class Vehiculo {
     @Column(name = "anio_fabricacion")
     private Integer anioFabricacion;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String combustible;
+    private TipoCombustible combustible;
 
     @Column(nullable = false)
     private String descripcion;
@@ -36,71 +45,10 @@ public class Vehiculo {
     @Column(name = "creado_en")
     private OffsetDateTime creadoEn;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String estado;
+    private EstadoVehiculo estado;
 
     @Column(nullable = false)
     private boolean activo;
-
-    public UUID getId() {
-        return id;
-    }
-    public void setId(UUID id) {
-        this.id = id;
-    }
-    public String getPlaca() {
-        return placa;
-    }
-    public void setPlaca(String placa) {
-        this.placa = placa;
-    }
-    public Modelo getModelo() {
-        return modelo;
-    }
-    public void setModelo(Modelo modelo) {
-        this.modelo = modelo;
-    }
-    public TipoVehiculo getTipoVehiculo() {
-        return tipoVehiculo;
-    }
-    public void setTipoVehiculo(TipoVehiculo tipoVehiculo) {
-        this.tipoVehiculo = tipoVehiculo;
-    }
-    public Integer getAnioFabricacion() {
-        return anioFabricacion;
-    }
-    public void setAnioFabricacion(Integer anioFabricacion) {
-        this.anioFabricacion = anioFabricacion;
-    }
-    public String getCombustible() {
-        return combustible;
-    }
-    public void setCombustible(String combustible) {
-        this.combustible = combustible;
-    }
-    public String getDescripcion() {
-        return descripcion;
-    }
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-    public OffsetDateTime getCreadoEn() {
-        return creadoEn;
-    }
-    public void setCreadoEn(OffsetDateTime creadoEn) {
-        this.creadoEn = creadoEn;
-    }
-    public String getEstado() {
-        return estado;
-    }
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-    public boolean isActivo() {
-        return activo;
-    }
-    public void setActivo(boolean activo) {
-        this.activo = activo;
-    }
-
 }
