@@ -46,5 +46,4 @@ public class ClienteNatural extends Cliente{
     public void setApellido(String apellido) {
         this.apellido = apellido;
     }
-
 }
