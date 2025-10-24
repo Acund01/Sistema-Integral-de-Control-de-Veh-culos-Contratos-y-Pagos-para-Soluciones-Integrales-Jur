@@ -10,8 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ComprobanteService {
@@ -99,6 +102,20 @@ public class ComprobanteService {
                 .orElseThrow(() -> new RuntimeException("Comprobante no encontrado"));
         comprobante.setEstado("ANULADO");
         comprobanteRepository.save(comprobante);
+    }
+
+    public List<ComprobanteResponseDto> obtenerComprobantesPorRangoFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+
+        List<Comprobante> comprobantes = (List<Comprobante>) comprobanteRepository.findAll();
+
+        return comprobantes.stream()
+                .filter(c -> c.getFechaEmision() != null)
+                .filter(c -> {
+                    LocalDate fechaEmision = c.getFechaEmision().toLocalDate();
+                    return !fechaEmision.isBefore(fechaInicio) && !fechaEmision.isAfter(fechaFin);
+                })
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     private ComprobanteResponseDto mapToResponse(Comprobante comprobante) {

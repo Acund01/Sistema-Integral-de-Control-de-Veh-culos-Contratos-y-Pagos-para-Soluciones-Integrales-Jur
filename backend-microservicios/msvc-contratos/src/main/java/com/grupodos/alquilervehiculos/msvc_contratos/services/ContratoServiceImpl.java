@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ContratoServiceImpl implements ContratoService {
@@ -322,5 +323,19 @@ public class ContratoServiceImpl implements ContratoService {
         Long ultimoNumero = contratoRepository.findMaxNumeroContratoByYear(LocalDate.now().getYear());
         long nuevoNumero = (ultimoNumero == null ? 0 : ultimoNumero) + 1;
         return prefix + String.format("%04d", nuevoNumero);
+    }
+
+    public List<ContratoResponseDto> obtenerContratosPorRangoFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+
+        List<Contrato> contratos = contratoRepository.findAll();
+
+        return contratos.stream()
+                .filter(c -> c.getFechaCreacion() != null)
+                .filter(c -> {
+                    LocalDate fechaCreacion = c.getFechaCreacion().toLocalDate();
+                    return !fechaCreacion.isBefore(fechaInicio) && !fechaCreacion.isAfter(fechaFin);
+                })
+                .map(this::mapToResponse) // Usa tu método existente
+                .collect(Collectors.toList());
     }
 }

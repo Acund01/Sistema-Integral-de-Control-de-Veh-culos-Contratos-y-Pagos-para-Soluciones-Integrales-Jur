@@ -2,12 +2,15 @@ package com.grupodos.alquilervehiculos.msvc_contratos.controllers;
 
 import com.grupodos.alquilervehiculos.msvc_contratos.dto.ComprobanteRequestDto;
 import com.grupodos.alquilervehiculos.msvc_contratos.dto.ComprobanteResponseDto;
+import com.grupodos.alquilervehiculos.msvc_contratos.dto.RangoFechasRequest;
 import com.grupodos.alquilervehiculos.msvc_contratos.services.ComprobanteService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -47,5 +50,20 @@ public class ComprobanteController {
     public ResponseEntity<Void> anularComprobante(@PathVariable UUID comprobanteId) {
         comprobanteService.anularComprobante(comprobanteId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/rango-fechas")
+    public ResponseEntity<List<ComprobanteResponseDto>> obtenerComprobantesPorRangoFechas(
+            @Valid @RequestBody RangoFechasRequest request) {
+
+        try {
+            List<ComprobanteResponseDto> comprobantes = comprobanteService
+                    .obtenerComprobantesPorRangoFechas(request.fechaInicio(), request.fechaFin());
+
+            return ResponseEntity.ok(comprobantes);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }
