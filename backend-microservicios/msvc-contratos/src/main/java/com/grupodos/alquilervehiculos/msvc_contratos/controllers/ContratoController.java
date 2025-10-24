@@ -2,6 +2,7 @@ package com.grupodos.alquilervehiculos.msvc_contratos.controllers;
 
 import com.grupodos.alquilervehiculos.msvc_contratos.dto.ContratoRequestDto;
 import com.grupodos.alquilervehiculos.msvc_contratos.dto.ContratoResponseDto;
+import com.grupodos.alquilervehiculos.msvc_contratos.dto.RangoFechasRequest;
 import com.grupodos.alquilervehiculos.msvc_contratos.entities.Contrato;
 import com.grupodos.alquilervehiculos.msvc_contratos.services.ContratoService;
 import jakarta.validation.Valid;
@@ -60,5 +61,15 @@ public class ContratoController {
     @PutMapping("/{id}/cancelar")
     public ResponseEntity<ContratoResponseDto> cancelarContrato(@PathVariable UUID id) {
         return ResponseEntity.ok(contratoService.cancelarContrato(id));
+    }
+
+    @PostMapping("/rango-fechas")
+    public ResponseEntity<List<ContratoResponseDto>> obtenerContratosPorRangoFechas(
+            @Valid @RequestBody RangoFechasRequest request) {
+
+        List<ContratoResponseDto> contratos = contratoService
+                .obtenerContratosPorRangoFechas(request.fechaInicio(), request.fechaFin());
+
+        return ResponseEntity.ok(contratos);
     }
 }
