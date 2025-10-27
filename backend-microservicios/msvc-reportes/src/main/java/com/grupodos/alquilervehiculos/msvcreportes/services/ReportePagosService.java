@@ -2,52 +2,86 @@ package com.grupodos.alquilervehiculos.msvcreportes.services;
 
 import com.grupodos.alquilervehiculos.msvcreportes.clients.ClienteFeignClient;
 import com.grupodos.alquilervehiculos.msvcreportes.clients.ContratoFeignClient;
-import com.grupodos.alquilervehiculos.msvcreportes.dto.ClienteDto;
-import com.grupodos.alquilervehiculos.msvcreportes.dto.ComprobanteDto;
-import com.grupodos.alquilervehiculos.msvcreportes.dto.RangoFechasRequest;
-import com.grupodos.alquilervehiculos.msvcreportes.dto.ReportePagosDto;
+import com.grupodos.alquilervehiculos.msvcreportes.dto.*;
 import com.grupodos.alquilervehiculos.msvcreportes.entities.Reporte;
 import com.grupodos.alquilervehiculos.msvcreportes.repositories.ReporteRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
-@Service
-public class ReportePagosService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ReportePagosService.class);
+@Service
+@Slf4j
+@AllArgsConstructor
+public class ReportePagosService {
 
     private final ContratoFeignClient contratoClient;
     private final ClienteFeignClient clienteClient;
     private final ReporteRepository reporteRepository;
 
-    public ReportePagosService(ContratoFeignClient contratoClient, ClienteFeignClient clienteClient, ReporteRepository reporteRepository) {
-        this.contratoClient = contratoClient;
-        this.clienteClient = clienteClient;
-        this.reporteRepository = reporteRepository;
-    }
-
     public List<ReportePagosDto> generarReportePagos(LocalDate fechaInicio, LocalDate fechaFin) {
-        logger.info("Generando reporte de pagos desde {} hasta {}", fechaInicio, fechaFin);
+        log.info("Generando reporte de pagos desde {} hasta {}", fechaInicio, fechaFin);
+
         try {
             RangoFechasRequest request = new RangoFechasRequest(fechaInicio, fechaFin);
+
             List<ComprobanteDto> comprobantes = contratoClient.obtenerComprobantesPorRangoFechas(request);
-            List<ClienteDto> clientes = clienteClient.obtenerTodosClientes();
-            Map<UUID, ClienteDto> clientesMap = clientes.stream().collect(Collectors.toMap(ClienteDto::id, cliente -> cliente));
+            log.debug("Comprobantes obtenidos: {}", comprobantes != null ? comprobantes.size() : "NULL");
+
+            if (comprobantes == null || comprobantes.isEmpty()) {
+                log.warn("No se encontraron comprobantes para el rango indicado");
+                return Collections.emptyList();
+            }
+
+            List<ContratoPagoDto> contratos = contratoClient.obtenerContratosPorRangoFechasPago(request);
+            log.info("Contratos recibidos: {}", contratos);
+
+            Set<UUID> clienteIds = contratos.stream()
+                    .filter(c -> c.cliente() != null && c.cliente().id() != null)
+                    .map(c -> c.cliente().id())
+                    .collect(Collectors.toSet());
+
+            log.debug("Clientes a consultar ({}): {}", clienteIds.size(), clienteIds);
+
+            List<ClienteDto> clientes = clienteIds.isEmpty()
+                    ? new ArrayList<>()
+                    : clienteClient.obtenerClientesParaReportes(new ArrayList<>(clienteIds));
+
+            log.info("Clientes recibidos: {}", clientes);
+
+            Map<UUID, ContratoPagoDto> contratoMap = contratos.stream()
+                    .filter(c -> c.id() != null)
+                    .collect(Collectors.toMap(ContratoPagoDto::id, c -> c));
+
+            Map<UUID, ClienteDto> clienteMap = clientes.stream()
+                    .filter(c -> c.id() != null)
+                    .collect(Collectors.toMap(ClienteDto::id, c -> c));
+
             List<ReportePagosDto> reporte = new ArrayList<>();
 
             for (ComprobanteDto comprobante : comprobantes) {
-                String codigoContrato = "CT-" + comprobante.idContrato().toString().substring(0, 8);
-                ClienteDto cliente = obtenerClienteParaComprobante(comprobante, clientesMap);
-                ReportePagosDto dto = new ReportePagosDto(
+                if (comprobante == null || comprobante.idContrato() == null) continue;
+
+                ContratoPagoDto contrato = contratoMap.get(comprobante.idContrato());
+                ClienteDto cliente = null;
+
+                if (contrato != null && contrato.cliente() != null) {
+                    cliente = clienteMap.getOrDefault(contrato.cliente().id(), contrato.cliente());
+                }
+
+                if (cliente == null) {
+                    log.warn("Cliente no encontrado para contrato {} (clienteId=null)", comprobante.idContrato());
+                    cliente = crearClientePorDefecto();
+                }
+
+                String codigoContrato = contrato != null ? contrato.codigoContrato() : "N/A";
+
+                reporte.add(new ReportePagosDto(
                         comprobante.numeroSerie() + "-" + comprobante.numeroCorrelativo(),
                         comprobante.fechaEmision(),
                         comprobante.tipoComprobante(),
@@ -59,51 +93,66 @@ public class ReportePagosService {
                         comprobante.total(),
                         comprobante.estado(),
                         codigoContrato
-                );
-                reporte.add(dto);
+                ));
             }
 
-            // Guardar registro del reporte generado
-            Reporte registroReporte = new Reporte();
-            registroReporte.setTipoReporte("PAGOS");
-            registroReporte.setFormato("EXCEL");
-            registroReporte.setNombreArchivo("reporte-pagos-" + fechaInicio + "-a-" + fechaFin + ".xlsx");
-            registroReporte.setGeneradoPor("SISTEMA"); // O podrías obtener el usuario autenticado
-            registroReporte.setParametros("FechaInicio: " + fechaInicio + ", FechaFin: " + fechaFin);
-            registroReporte.setFechaGeneracion(LocalDateTime.now());
-            reporteRepository.save(registroReporte);
+            //Guardar registro del reporte
+            guardarRegistroReporte(fechaInicio, fechaFin, reporte.size());
 
-            logger.info("Reporte de pagos generado con {} registros", reporte.size());
+            log.info("Reporte generado con {} registros", reporte.size());
             return reporte;
+
         } catch (Exception e) {
-            logger.error("Error generando reporte de pagos: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al generar reporte de pagos: " + e.getMessage());
+            log.error("Error generando reporte de pagos: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al generar reporte de pagos: " + e.getMessage(), e);
         }
     }
 
-    private ClienteDto obtenerClienteParaComprobante(ComprobanteDto comprobante, Map<UUID, ClienteDto> clientesMap) {
-        // En un escenario real, necesitaríamos obtener el contrato y luego el cliente
-        // Por simplicidad, retornamos un cliente genérico
-        return clientesMap.values().stream().findFirst()
-                .orElse(new ClienteDto(
-                        null, "NATURAL", "Cliente", "No Encontrado",
-                        "DNI", "00000000", null, null, null, "email@ejemplo.com", "000000000", true
-                ));
+    // Cliente por defecto en caso de error o nulo
+    private ClienteDto crearClientePorDefecto() {
+        return new ClienteDto(
+                UUID.randomUUID(),
+                "NATURAL",
+                "Cliente",
+                "No Encontrado",
+                "DNI",
+                "00000000",
+                null,
+                null,
+                "no-encontrado@ejemplo.com",
+                "000000000",
+                null
+        );
     }
 
+    // Obtener nombre completo o razón social
     private String obtenerNombreCliente(ClienteDto cliente) {
-        if ("NATURAL".equals(cliente.tipoCliente())) {
-            return cliente.nombre() + " " + cliente.apellido();
+        if ("NATURAL".equalsIgnoreCase(cliente.tipoCliente())) {
+            return (cliente.nombre() != null ? cliente.nombre() : "") + " " +
+                    (cliente.apellido() != null ? cliente.apellido() : "");
         } else {
-            return cliente.razonSocial();
+            return cliente.razonSocial() != null ? cliente.razonSocial() : "Cliente Empresa";
         }
     }
 
+    // Obtener documento del cliente
     private String obtenerDocumentoCliente(ClienteDto cliente) {
-        if ("NATURAL".equals(cliente.tipoCliente())) {
+        if ("NATURAL".equalsIgnoreCase(cliente.tipoCliente())) {
             return cliente.tipoDocumento() + ": " + cliente.numeroDocumento();
         } else {
-            return "RUC: " + cliente.ruc();
+            return "RUC: " + (cliente.ruc() != null ? cliente.ruc() : "00000000000");
         }
+    }
+
+    // Registrar auditoría del reporte
+    private void guardarRegistroReporte(LocalDate fechaInicio, LocalDate fechaFin, int cantidadRegistros) {
+        Reporte registro = new Reporte();
+        registro.setTipoReporte("PAGOS");
+        registro.setFormato("EXCEL");
+        registro.setNombreArchivo("reporte-pagos-" + fechaInicio + "-a-" + fechaFin + ".xlsx");
+        registro.setGeneradoPor("SISTEMA");
+        registro.setParametros("FechaInicio: " + fechaInicio + ", FechaFin: " + fechaFin + ", Registros: " + cantidadRegistros);
+        registro.setFechaGeneracion(LocalDateTime.now());
+        reporteRepository.save(registro);
     }
 }

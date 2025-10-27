@@ -32,12 +32,12 @@ public class ReporteIngresosService {
         this.reporteRepository = reporteRepository;
     }
 
-    public List<ReporteIngresosDto> generarReporteIngresosMensuales(Integer año) {
-        logger.info("Generando reporte de ingresos mensuales para el año {}", año);
+    public List<ReporteIngresosDto> generarReporteIngresosMensuales(Integer anio) {
+        logger.info("Generando reporte de ingresos mensuales para el año {}", anio);
 
         try {
-            LocalDate fechaInicio = LocalDate.of(año, 1, 1);
-            LocalDate fechaFin = LocalDate.of(año, 12, 31);
+            LocalDate fechaInicio = LocalDate.of(anio, 1, 1);
+            LocalDate fechaFin = LocalDate.of(anio, 12, 31);
 
             RangoFechasRequest request = new RangoFechasRequest(fechaInicio, fechaFin);
             List<ContratoDto> contratos = contratoClient.obtenerContratosPorRangoFechas(request);
@@ -56,7 +56,7 @@ public class ReporteIngresosService {
 
             // Procesar cada mes del año
             for (int mes = 1; mes <= 12; mes++) {
-                YearMonth yearMonth = YearMonth.of(año, mes);
+                YearMonth yearMonth = YearMonth.of(anio, mes);
 
                 List<ContratoDto> contratosMes = contratosPorMes.getOrDefault(yearMonth, Collections.emptyList());
                 List<ComprobanteDto> comprobantesMes = comprobantesPorMes.getOrDefault(yearMonth, Collections.emptyList());
@@ -103,10 +103,10 @@ public class ReporteIngresosService {
             Reporte registroReporte = new Reporte();
             registroReporte.setTipoReporte("INGRESOS_MENSUALES");
             registroReporte.setFormato("EXCEL");
-            registroReporte.setNombreArchivo("reporte-ingresos-mensuales-" + año + ".xlsx");
+            registroReporte.setNombreArchivo("reporte-ingresos-mensuales-" + anio + ".xlsx");
             registroReporte.setFechaGeneracion(LocalDateTime.now());
             registroReporte.setGeneradoPor("SISTEMA");
-            registroReporte.setParametros("Año: " + año);
+            registroReporte.setParametros("Año: " + anio);
             reporteRepository.save(registroReporte);
 
             logger.info("Reporte de ingresos mensuales generado con {} meses", reporte.size());

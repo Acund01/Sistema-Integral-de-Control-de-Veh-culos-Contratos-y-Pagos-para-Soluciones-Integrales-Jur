@@ -39,7 +39,7 @@ public class ReporteUsoVehiculosService {
         try {
             RangoFechasRequest request = new RangoFechasRequest(fechaInicio, fechaFin);
             List<ContratoDto> contratos = contratoClient.obtenerContratosPorRangoFechas(request);
-            List<VehiculoDto> vehiculos = vehiculoClient.obtenerTodosVehiculos();
+            List<VehiculoDto> vehiculos = vehiculoClient.obtenerVehiculosParaReportes();
 
             // Agrupar detalles por vehículo
             Map<String, List<DetalleContratoDto>> detallesPorVehiculo = contratos.stream()

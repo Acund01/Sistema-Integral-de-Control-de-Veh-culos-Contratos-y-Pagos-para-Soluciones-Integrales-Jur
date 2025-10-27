@@ -2,6 +2,7 @@ package com.grupodos.alquilervehiculos.msvcreportes.clients;
 
 import com.grupodos.alquilervehiculos.msvcreportes.dto.ComprobanteDto;
 import com.grupodos.alquilervehiculos.msvcreportes.dto.ContratoDto;
+import com.grupodos.alquilervehiculos.msvcreportes.dto.ContratoPagoDto;
 import com.grupodos.alquilervehiculos.msvcreportes.dto.RangoFechasRequest;
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -21,6 +22,9 @@ public interface ContratoFeignClient {
 
     @PostMapping("/api/contratos/rango-fechas")
     List<ContratoDto> obtenerContratosPorRangoFechas(@RequestBody RangoFechasRequest request);
+
+    @PostMapping("/api/contratos/rango-fechas")
+    List<ContratoPagoDto> obtenerContratosPorRangoFechasPago(@RequestBody RangoFechasRequest request);
 
     @PostMapping("/api/comprobantes/rango-fechas")
         List<ComprobanteDto> obtenerComprobantesPorRangoFechas(

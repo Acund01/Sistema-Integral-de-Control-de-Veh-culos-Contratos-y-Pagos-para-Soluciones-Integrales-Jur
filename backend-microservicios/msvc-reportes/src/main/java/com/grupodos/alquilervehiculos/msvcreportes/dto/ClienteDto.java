@@ -11,8 +11,7 @@ public record ClienteDto(
         String numeroDocumento,
         String razonSocial,
         String ruc,
-        RepresentanteDto representante,
         String correo,
         String telefono,
-        Boolean activo
+        RepresentanteDto representante
 ) {}

@@ -9,9 +9,7 @@ import java.util.List;
 @FeignClient(name = "msvc-vehiculos", url = "http://localhost:8083")
 public interface VehiculoFeignClient {
 
-    @GetMapping("/api/vehiculos")
-    List<VehiculoDto> obtenerTodosVehiculos();
+    @GetMapping("/api/vehiculos/para-reportes")
+    List<VehiculoDto> obtenerVehiculosParaReportes();
 
-    @GetMapping("/api/vehiculos/activos")
-    List<VehiculoDto> obtenerVehiculosActivos();
 }
