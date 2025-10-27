@@ -1,10 +1,16 @@
 package com.grupodos.alquilervehiculos.msvcclientes.entities;
 
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @PrimaryKeyJoinColumn(name = "id")
 @Table(name = "clientes_empresas")
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
 public class ClienteEmpresa extends Cliente {
 
     @Column(name = "razon_social", nullable = false)
@@ -23,35 +29,4 @@ public class ClienteEmpresa extends Cliente {
     @JoinColumn(name = "representante_id", referencedColumnName = "id")
     private Representante representante;
 
-    // Getters and setters
-    public String getRazonSocial() {
-        return razonSocial;
-    }
-    public void setRazonSocial(String razonSocial) {
-        this.razonSocial = razonSocial;
-    }
-    public String getRuc() {
-        return ruc;
-    }
-    public void setRuc(String ruc) {
-        this.ruc = ruc;
-    }
-    public String getGiroComercial() {
-        return giroComercial;
-    }
-    public void setGiroComercial(String giroComercial) {
-        this.giroComercial = giroComercial;
-    }
-    public String getDireccionFiscal() {
-        return direccionFiscal;
-    }
-    public void setDireccionFiscal(String direccionFiscal) {
-        this.direccionFiscal = direccionFiscal;
-    }
-    public Representante getRepresentante() {
-        return representante;
-    }
-    public void setRepresentante(Representante representante) {
-        this.representante = representante;
-    }
 }

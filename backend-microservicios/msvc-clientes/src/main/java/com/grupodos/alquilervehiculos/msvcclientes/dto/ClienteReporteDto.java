@@ -2,7 +2,7 @@ package com.grupodos.alquilervehiculos.msvcclientes.dto;
 
 import java.util.UUID;
 
-public record ClienteContratoDto(
+public record ClienteReporteDto(
         UUID id,
         String tipoCliente,
         String nombre,
@@ -11,5 +11,7 @@ public record ClienteContratoDto(
         String numeroDocumento,
         String razonSocial,
         String ruc,
+        String correo,
+        String telefono,
         RepresentanteDto representante
 ) {}
