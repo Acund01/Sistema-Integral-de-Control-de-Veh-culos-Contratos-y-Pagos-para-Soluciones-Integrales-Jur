@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@FeignClient(name = "msvc-vehiculos", url = "http://localhost:8083")
+@FeignClient(name = "msvc-vehiculos")
 public interface VehiculoFeignClient {
 
     @GetMapping("/api/vehiculos/contratos/{id}")  // ← Cambiado al endpoint correcto

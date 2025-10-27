@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "msvc-clientes", url = "http://localhost:8082")
+@FeignClient(name = "msvc-clientes")
 public interface ClienteFeignClient {
 
     @PostMapping("/api/clientes/reportes/por-ids")
