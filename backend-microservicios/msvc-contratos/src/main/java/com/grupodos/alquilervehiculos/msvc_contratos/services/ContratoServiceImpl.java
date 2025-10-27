@@ -5,8 +5,10 @@ import com.grupodos.alquilervehiculos.msvc_contratos.clients.VehiculoFeignClient
 import com.grupodos.alquilervehiculos.msvc_contratos.dto.*;
 import com.grupodos.alquilervehiculos.msvc_contratos.entities.Contrato;
 import com.grupodos.alquilervehiculos.msvc_contratos.entities.DetalleContrato;
+import com.grupodos.alquilervehiculos.msvc_contratos.enums.EstadoVehiculo;
 import com.grupodos.alquilervehiculos.msvc_contratos.repositories.ContratoRepository;
 import feign.FeignException;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,19 +19,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class ContratoServiceImpl implements ContratoService {
 
     private final ContratoRepository contratoRepository;
     private final ClienteFeignClient clienteClient;
     private final VehiculoFeignClient vehiculoClient;
-
-    public ContratoServiceImpl(ContratoRepository contratoRepository,
-                               ClienteFeignClient clienteClient,
-                               VehiculoFeignClient vehiculoClient) {
-        this.contratoRepository = contratoRepository;
-        this.clienteClient = clienteClient;
-        this.vehiculoClient = vehiculoClient;
-    }
 
     @Override
     public List<ContratoResponseDto> listarContratos() {
@@ -95,9 +90,9 @@ public class ContratoServiceImpl implements ContratoService {
             detalles.add(detalle);
             total += detalle.getSubtotal();
 
-            // Actualizar estado del vehículo a "ALQUILADO"
             try {
-                vehiculoClient.actualizarEstado(detalleDto.idVehiculo(), "ALQUILADO");
+                vehiculoClient.actualizarEstado(detalleDto.idVehiculo(),
+                        new CambioEstadoVehDto(EstadoVehiculo.ALQUILADO));
             } catch (FeignException e) {
                 throw new RuntimeException("Error al actualizar estado del vehículo: " + e.getMessage());
             }
@@ -129,7 +124,8 @@ public class ContratoServiceImpl implements ContratoService {
         // Liberar vehículos anteriores
         for (DetalleContrato detalle : contrato.getDetalles()) {
             try {
-                vehiculoClient.actualizarEstado(detalle.getIdVehiculo(), "DISPONIBLE");
+                vehiculoClient.actualizarEstado(detalle.getIdVehiculo(),
+                        new CambioEstadoVehDto(EstadoVehiculo.DISPONIBLE));
             } catch (FeignException e) {
                 System.err.println("Error liberando vehículo: " + e.getMessage());
             }
@@ -162,9 +158,9 @@ public class ContratoServiceImpl implements ContratoService {
             contrato.getDetalles().add(detalle);
             total += detalle.getSubtotal();
 
-            // Actualizar estado del vehículo
             try {
-                vehiculoClient.actualizarEstado(detalleDto.idVehiculo(), "ALQUILADO");
+                vehiculoClient.actualizarEstado(detalleDto.idVehiculo(),
+                        new CambioEstadoVehDto(EstadoVehiculo.ALQUILADO));
             } catch (FeignException e) {
                 throw new RuntimeException("Error al actualizar estado del vehículo: " + e.getMessage());
             }
@@ -190,7 +186,8 @@ public class ContratoServiceImpl implements ContratoService {
         // Liberar vehículos
         for (DetalleContrato detalle : contrato.getDetalles()) {
             try {
-                vehiculoClient.actualizarEstado(detalle.getIdVehiculo(), "DISPONIBLE");
+                vehiculoClient.actualizarEstado(detalle.getIdVehiculo(),
+                        new CambioEstadoVehDto(EstadoVehiculo.DISPONIBLE));
             } catch (FeignException e) {
                 System.err.println("Error liberando vehículo: " + e.getMessage());
             }
@@ -212,7 +209,8 @@ public class ContratoServiceImpl implements ContratoService {
         // Liberar vehículos
         for (DetalleContrato detalle : contrato.getDetalles()) {
             try {
-                vehiculoClient.actualizarEstado(detalle.getIdVehiculo(), "DISPONIBLE");
+                vehiculoClient.actualizarEstado(detalle.getIdVehiculo(),
+                        new CambioEstadoVehDto(EstadoVehiculo.DISPONIBLE));
             } catch (FeignException e) {
                 System.err.println("Error liberando vehículo: " + e.getMessage());
             }
@@ -237,7 +235,8 @@ public class ContratoServiceImpl implements ContratoService {
         // Liberar vehículos
         for (DetalleContrato detalle : contrato.getDetalles()) {
             try {
-                vehiculoClient.actualizarEstado(detalle.getIdVehiculo(), "DISPONIBLE");
+                vehiculoClient.actualizarEstado(detalle.getIdVehiculo(),
+                        new CambioEstadoVehDto(EstadoVehiculo.DISPONIBLE));
             } catch (FeignException e) {
                 System.err.println("Error liberando vehículo: " + e.getMessage());
             }
@@ -335,7 +334,7 @@ public class ContratoServiceImpl implements ContratoService {
                     LocalDate fechaCreacion = c.getFechaCreacion().toLocalDate();
                     return !fechaCreacion.isBefore(fechaInicio) && !fechaCreacion.isAfter(fechaFin);
                 })
-                .map(this::mapToResponse) // Usa tu método existente
+                .map(this::mapToResponse) // Usa tu metodo existente
                 .collect(Collectors.toList());
     }
 }

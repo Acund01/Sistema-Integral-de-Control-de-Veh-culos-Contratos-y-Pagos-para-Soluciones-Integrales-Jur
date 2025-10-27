@@ -5,6 +5,7 @@ import com.grupodos.alquilervehiculos.msvc_contratos.dto.ComprobanteResponseDto;
 import com.grupodos.alquilervehiculos.msvc_contratos.dto.RangoFechasRequest;
 import com.grupodos.alquilervehiculos.msvc_contratos.services.ComprobanteService;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,15 +15,12 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@AllArgsConstructor
 @RequestMapping("/api/comprobantes")
 @CrossOrigin(origins = "http://localhost:3000")
 public class ComprobanteController {
 
     private final ComprobanteService comprobanteService;
-
-    public ComprobanteController(ComprobanteService comprobanteService) {
-        this.comprobanteService = comprobanteService;
-    }
 
     // SOLO ESTE ENDPOINT PARA GENERAR
     @PostMapping

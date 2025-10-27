@@ -12,7 +12,7 @@ public class MsvcVehiculosApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(MsvcVehiculosApplication.class, args);
-        log.info("🚗 Microservicio de Vehículos iniciado exitosamente!");
+        log.info("Microservicio de Vehículos iniciado exitosamente!");
 	}
 
 }

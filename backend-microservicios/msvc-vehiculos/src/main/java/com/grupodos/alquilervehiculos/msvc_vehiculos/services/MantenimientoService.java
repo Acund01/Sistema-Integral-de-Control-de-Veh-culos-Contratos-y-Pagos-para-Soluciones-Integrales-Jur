@@ -92,7 +92,6 @@ public class MantenimientoService {
         vehiculo.setEstado(EstadoVehiculo.EN_MANTENIMIENTO);
         vehiculoRepository.save(vehiculo);
 
-        // Crear el mantenimiento
         Mantenimiento mantenimiento = new Mantenimiento();
         mantenimiento.setVehiculo(vehiculo);
         mantenimiento.setDescripcion(StringUtils.trim(dto.descripcion()));

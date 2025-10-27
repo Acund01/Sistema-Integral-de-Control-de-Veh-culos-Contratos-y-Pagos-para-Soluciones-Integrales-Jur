@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
     List<Cliente> findByActivoTrue();
     List<Cliente> findByActivoFalse();
+    boolean existsByCorreo(String correo);
+    boolean existsByCorreoAndIdNot(String correo, UUID id);
 }

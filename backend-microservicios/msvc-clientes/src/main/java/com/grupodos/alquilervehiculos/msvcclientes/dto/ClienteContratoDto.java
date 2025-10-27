@@ -4,12 +4,12 @@ import java.util.UUID;
 
 public record ClienteContratoDto(
         UUID id,
-        String tipoCliente,           // NATURAL o EMPRESA
-        String nombre,                // ClienteNatural
+        String tipoCliente,
+        String nombre,
         String apellido,
-        String tipoDocumento,// ClienteNatural
-        String numeroDocumento,                    //Natural
-        String razonSocial,           // ClienteEmpresa
-        String ruc,                   // ClienteEmpresa
-        RepresentanteDto representante // Solo para empresas
+        String tipoDocumento,
+        String numeroDocumento,
+        String razonSocial,
+        String ruc,
+        RepresentanteDto representante
 ) {}
