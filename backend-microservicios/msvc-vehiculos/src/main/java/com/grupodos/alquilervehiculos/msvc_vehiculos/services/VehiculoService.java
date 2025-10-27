@@ -1,6 +1,7 @@
 package com.grupodos.alquilervehiculos.msvc_vehiculos.services;
 
 import com.grupodos.alquilervehiculos.msvc_vehiculos.dto.VehiculoRequestDto;
+import com.grupodos.alquilervehiculos.msvc_vehiculos.dto.VehiculoResponseDto;
 import com.grupodos.alquilervehiculos.msvc_vehiculos.entities.Modelo;
 import com.grupodos.alquilervehiculos.msvc_vehiculos.entities.TipoVehiculo;
 import com.grupodos.alquilervehiculos.msvc_vehiculos.entities.Vehiculo;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -177,5 +179,21 @@ public class VehiculoService {
     public boolean verificarDisponibilidad(UUID id) {
         Vehiculo vehiculo = obtenerPorId(id);
         return vehiculo.getEstado() == EstadoVehiculo.DISPONIBLE;
+    }
+
+    public List<VehiculoResponseDto> listarTodosParaReportes() {
+        log.debug("Obteniendo todos los vehículos para reportes");
+        List<Vehiculo> vehiculos = vehiculoRepository.findAll();
+        return vehiculos.stream()
+                .map(vehiculo -> new VehiculoResponseDto(
+                        vehiculo.getId(),
+                        vehiculo.getPlaca(),
+                        vehiculo.getModelo().getMarca().getNombre(),
+                        vehiculo.getModelo().getNombre(),
+                        vehiculo.getTipoVehiculo().getNombre(),
+                        vehiculo.getEstado().name(),
+                        vehiculo.isActivo()
+                ))
+                .collect(Collectors.toList());
     }
 }

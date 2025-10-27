@@ -3,6 +3,7 @@ package com.grupodos.alquilervehiculos.msvc_vehiculos.controllers;
 import com.grupodos.alquilervehiculos.msvc_vehiculos.dto.CambioEstadoRequest;
 import com.grupodos.alquilervehiculos.msvc_vehiculos.dto.VehiculoContratoDto;
 import com.grupodos.alquilervehiculos.msvc_vehiculos.dto.VehiculoRequestDto;
+import com.grupodos.alquilervehiculos.msvc_vehiculos.dto.VehiculoResponseDto;
 import com.grupodos.alquilervehiculos.msvc_vehiculos.entities.Vehiculo;
 import com.grupodos.alquilervehiculos.msvc_vehiculos.entities.enums.EstadoVehiculo;
 import com.grupodos.alquilervehiculos.msvc_vehiculos.services.VehiculoService;
@@ -110,5 +111,11 @@ public class VehiculoController {
         log.info("Solicitud para actualizar estado del vehículo {} a: {}", id, request.estado());
         Vehiculo vehiculo = vehiculoService.actualizarEstado(id, request.estado());
         return ResponseEntity.ok(vehiculo);
+    }
+
+    @GetMapping("/para-reportes")
+    public ResponseEntity<List<VehiculoResponseDto>> listarParaReportes() {
+        log.debug("Solicitud para listar vehículos para reportes");
+        return ResponseEntity.ok(vehiculoService.listarTodosParaReportes());
     }
 }

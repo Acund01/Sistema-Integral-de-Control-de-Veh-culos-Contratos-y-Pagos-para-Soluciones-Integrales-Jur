@@ -42,7 +42,6 @@ public class MarcaService {
     public Marca crearMarcaConModelos(MarcaConModelosRequestDto dto) {
         log.info("Creando marca '{}' con {} modelos", dto.nombreMarca(), dto.modelos().size());
 
-        // APACHE COMMONS - Validación
         if (StringUtils.isBlank(dto.nombreMarca())) {
             throw new IllegalArgumentException("El nombre de la marca no puede estar vacío");
         }
@@ -54,13 +53,11 @@ public class MarcaService {
             throw new RecursoDuplicadoException("La marca '" + nombreMarca + "' ya existe");
         }
 
-        // Crear marca
         Marca marca = new Marca();
         marca.setNombre(nombreMarca);
         Marca marcaGuardada = marcaRepository.save(marca);
         log.debug("Marca creada con ID: {}", marcaGuardada.getId());
 
-        // Crear modelos asociados
         List<Modelo> modelosCreados = dto.modelos().stream()
                 .map(nombreModelo -> {
                     String nombreModeloNormalizado = StringUtils.capitalize(StringUtils.trim(nombreModelo));
