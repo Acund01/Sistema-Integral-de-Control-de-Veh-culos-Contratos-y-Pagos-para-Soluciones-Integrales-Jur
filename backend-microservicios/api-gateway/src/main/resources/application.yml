@@ -1,0 +1,50 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: msvc-users
+              uri: lb://msvc-users
+              predicates:
+                - Path=/api/users/**
+
+            - id: msvc-clientes
+              uri: lb://msvc-clientes
+              predicates:
+                - Path=/api/clientes/**
+
+            - id: msvc-veh-vehiculos
+              uri: lb://msvc-vehiculos
+              predicates:
+                - Path=/api/vehiculos/**
+            - id: msvc-veh-modelos
+              uri: lb://msvc-vehiculos
+              predicates:
+                - Path=/api/modelos/**
+            - id: msvc-veh-marcas
+              uri: lb://msvc-vehiculos
+              predicates:
+                - Path=/api/marcas/**
+            - id: msvc-veh-mantenimientos
+              uri: lb://msvc-vehiculos
+              predicates:
+                - Path=/api/mantenimientos/**
+            - id: msvc-veh-tipos-vehiculo
+              uri: lb://msvc-vehiculos
+              predicates:
+                - Path=/api/tipos-vehiculo/**
+
+            - id: msvc-cont-contratos
+              uri: lb://msvc-contratos
+              predicates:
+                - Path=/api/contratos/**
+            - id: msvc-cont-comprobantes
+              uri: lb://msvc-contratos
+              predicates:
+                - Path=/api/comprobantes/**
+
+            - id: msvc-reportes
+              uri: lb://msvc-reportes
+              predicates:
+                - Path=/api/reportes/**
