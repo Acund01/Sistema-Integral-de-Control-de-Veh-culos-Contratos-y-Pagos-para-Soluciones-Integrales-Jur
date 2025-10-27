@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 
-@FeignClient(name = "msvc-vehiculos", url = "http://localhost:8083")
+@FeignClient(name = "msvc-vehiculos")
 public interface VehiculoFeignClient {
 
     @GetMapping("/api/vehiculos/para-reportes")

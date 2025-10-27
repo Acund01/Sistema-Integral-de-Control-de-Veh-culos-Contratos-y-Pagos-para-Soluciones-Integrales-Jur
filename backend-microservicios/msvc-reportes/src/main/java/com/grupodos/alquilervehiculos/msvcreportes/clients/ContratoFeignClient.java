@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDate;
 import java.util.List;
 
-@FeignClient(name = "msvc-contratos", url = "http://localhost:8084")
+@FeignClient(name = "msvc-contratos")
 public interface ContratoFeignClient {
 
     @GetMapping("/api/contratos")
