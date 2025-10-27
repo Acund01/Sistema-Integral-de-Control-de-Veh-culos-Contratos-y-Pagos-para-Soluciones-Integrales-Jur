@@ -1,11 +1,9 @@
 package com.grupodos.alquilervehiculos.msvc_contratos.clients;
 
+import com.grupodos.alquilervehiculos.msvc_contratos.dto.CambioEstadoVehDto;
 import com.grupodos.alquilervehiculos.msvc_contratos.dto.VehiculoDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -15,6 +13,6 @@ public interface VehiculoFeignClient {
     @GetMapping("/api/vehiculos/contratos/{id}")  // ← Cambiado al endpoint correcto
     VehiculoDto obtenerVehiculoPorId(@PathVariable UUID id);
 
-    @PutMapping("/api/vehiculos/{id}/estado")     // ← Necesitas crear este endpoint
-    void actualizarEstado(@PathVariable UUID id, @RequestParam String estado);
+    @PutMapping("/api/vehiculos/{id}/estado")
+    void actualizarEstado(@PathVariable UUID id, @RequestBody CambioEstadoVehDto request);
 }
