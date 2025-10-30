@@ -11,33 +11,33 @@ export interface StatCard {
 }
 
 export interface QuickAction {
-  id: string;
+  id: ReactNode;
   title: string;
   description: string;
-  icon: string;
+  icon: ReactNode;
 }
 
 export interface Activity {
-  id: string;
+  id: ReactNode;
   description: string;
   time: string;
 }
 
 export interface Alert {
-  id: string;
+  id: ReactNode;
   type: 'warning' | 'info' | 'error';
   title: string;
   description: string;
 }
 
 export interface MenuItem {
-  id: string;
+  id: ReactNode;
   label: string;
   icon: ReactNode;
   path: string;
 }
 
 export interface User {
-  username: string;
+  username: ReactNode;
   name: string;
 }

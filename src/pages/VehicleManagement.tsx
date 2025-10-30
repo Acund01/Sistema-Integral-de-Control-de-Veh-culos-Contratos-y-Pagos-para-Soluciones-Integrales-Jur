@@ -1,15 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import VehicleCard from '../components/VehicleCard';
+import VehicleDetailsModal from '../components/VehicleDetailsModal';
 import '../styles/VehicleManagement.css';
 import type { Vehicle, VehicleStats } from '../types/vehicle';
 
+
 interface VehicleManagementProps {
   startAdding?: boolean;
+  vehicles?: Vehicle[];
+  onAddVehicle?: (vehicle: Vehicle) => void;
+  onUpdateVehicle?: (id: string, patch: Partial<Vehicle>) => void;
+  onDeleteVehicle?: (id: string) => void;
 }
 
-const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = false }) => {
+const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = false, vehicles, onAddVehicle, onUpdateVehicle, onDeleteVehicle }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
   interface NewVehicleForm {
     brand: string;
@@ -31,83 +39,29 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
     description: '',
   });
 
-  const stats: VehicleStats = {
-    total: 48,
-    available: 36,
-    rented: 9,
-    maintenance: 3,
-  };
-
-  const vehicles: Vehicle[] = [
-    {
-      id: '1',
-      brand: 'Toyota',
-      model: 'Corolla',
-      type: 'Automóvil',
-      year: 2023,
-      plate: 'AQP-123',
-      fuel: 'Gasolina',
-      lastMaintenance: '2024-01-15',
-      status: 'Disponible',
-    },
-    {
-      id: '2',
-      brand: 'Nissan',
-      model: 'Frontier',
-      type: 'Camiones',
-      year: 2022,
-      plate: 'LIM-456',
-      fuel: 'Diesel',
-      lastMaintenance: '2024-02-10',
-      status: 'Alquilado',
-    },
-    {
-      id: '3',
-      brand: 'Caterpillar',
-      model: '730C',
-      type: 'Carga Pesada',
-      year: 2023,
-      plate: 'CUS-789',
-      fuel: 'Diesel',
-      lastMaintenance: '2024-03-01',
-      status: 'Mantenimiento',
-    },
-    {
-      id: '4',
-      brand: 'Honda',
-      model: 'CR-V',
-      type: 'Automóvil',
-      year: 2021,
-      plate: 'TRU-012',
-      fuel: 'Gasolina',
-      lastMaintenance: '2024-01-20',
-      status: 'Disponible',
-    },
-    {
-      id: '5',
-      brand: 'Ford',
-      model: 'F-150',
-      type: 'Camiones',
-      year: 2023,
-      plate: 'ICA-345',
-      fuel: 'Gasolina',
-      lastMaintenance: '2024-03-05',
-      status: 'Disponible',
-    },
-    {
-      id: '6',
-      brand: 'Volvo',
-      model: 'A40G',
-      type: 'Carga Pesada',
-      year: 2022,
-      plate: 'PIU-678',
-      fuel: 'Diesel',
-      lastMaintenance: '2024-02-28',
-      status: 'Disponible',
-    },
+  // Inventario base de ejemplo
+  const baseVehicles: Vehicle[] = [
+    
   ];
 
-  const filteredVehicles = vehicles.filter(vehicle =>
+  // Estado del inventario mostrado (permite agregar nuevos vehículos)
+  const [items, setItems] = useState<Vehicle[]>(vehicles ?? baseVehicles);
+
+  // Si recibimos vehículos por props, sincronizamos con el estado local
+  useEffect(() => {
+    if (vehicles) setItems(vehicles);
+  }, [vehicles]);
+
+  // Cálculo de estadísticas a partir del inventario actual
+  const stats: VehicleStats = useMemo(() => {
+    const total = items.length;
+    const available = items.filter(v => v.status === 'Disponible').length;
+    const rented = items.filter(v => v.status === 'Alquilado').length;
+    const maintenance = items.filter(v => v.status === 'Mantenimiento').length;
+    return { total, available, rented, maintenance };
+  }, [items]);
+
+  const filteredVehicles = items.filter(vehicle =>
     vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
     vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
     vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -129,10 +83,42 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Guardar vehículo:', newVehicle);
-    // Aquí se enviaría al backend
-    // por ahora volver a la vista principal
+    if (editingVehicleId) {
+      // actualizar vehículo existente
+      const patch: Partial<Vehicle> = {
+        brand: newVehicle.brand || undefined,
+        model: newVehicle.model || undefined,
+        type: newVehicle.type || undefined,
+        year: parseInt(newVehicle.year, 10) || undefined,
+        plate: newVehicle.plate || undefined,
+        fuel: newVehicle.fuel || undefined,
+      };
+      if (onUpdateVehicle) {
+        onUpdateVehicle(editingVehicleId, patch);
+      } else {
+        setItems(prev => prev.map(v => v.id === editingVehicleId ? { ...v, ...patch } as Vehicle : v));
+      }
+    } else {
+      // Crear vehículo nuevo y agregarlo al inventario mostrado
+      const vehicleToAdd: Vehicle = {
+        id: Date.now().toString(),
+        brand: newVehicle.brand || 'Sin marca',
+        model: newVehicle.model || 'Sin modelo',
+        type: newVehicle.type || 'Automóvil',
+        year: parseInt(newVehicle.year, 10) || new Date().getFullYear(),
+        plate: newVehicle.plate || '',
+        fuel: newVehicle.fuel || '',
+        lastMaintenance: new Date().toISOString().slice(0, 10),
+        status: 'Disponible',
+      };
+      if (onAddVehicle) {
+        onAddVehicle(vehicleToAdd);
+      } else {
+        setItems((prev) => [vehicleToAdd, ...prev]);
+      }
+    }
     setIsAdding(false);
+    setEditingVehicleId(null);
     // limpiar formulario
     setNewVehicle({ brand: '', model: '', year: new Date().getFullYear().toString(), plate: '', type: '', fuel: '', description: '' });
   };
@@ -156,12 +142,39 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
     'GLP': 'Gas licuado de petróleo',
   };
 
-  const handleViewDetails = (vehicleId: string) => {
-    console.log('Ver detalles del vehículo:', vehicleId);
+  const handleViewDetails = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
   };
 
-  const handleVehicleMenu = (vehicleId: string) => {
-    console.log('Menú del vehículo:', vehicleId);
+  const handleDeleteVehicle = (vehicleId: string) => {
+    if (onDeleteVehicle) {
+      onDeleteVehicle(vehicleId);
+    } else {
+      setItems(prev => prev.filter(v => v.id !== vehicleId));
+    }
+  };
+
+  const handleStartEditVehicle = (vehicle: Vehicle) => {
+    setIsAdding(true);
+    setEditingVehicleId(vehicle.id);
+    setNewVehicle({
+      brand: vehicle.brand,
+      model: vehicle.model,
+      year: String(vehicle.year),
+      plate: vehicle.plate,
+      type: vehicle.type,
+      fuel: vehicle.fuel,
+      description: '',
+    });
+  };
+
+  const handleChangeStatus = (id: string, status: Vehicle['status']) => {
+    if (onUpdateVehicle) {
+      onUpdateVehicle(id, { status });
+    } else {
+      setItems(prev => prev.map(v => v.id === id ? { ...v, status } : v));
+    }
+    setSelectedVehicle(prev => (prev && prev.id === id ? { ...prev, status } : prev));
   };
 
   const handleFilters = () => {
@@ -179,8 +192,8 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
           <div className="page-header">
             <div className="header-content">
               
-              <h1 className="page-title">Agregar Nuevo Vehículo</h1>
-              <p className="page-subtitle">Completa la información del vehículo para agregarlo al inventario</p>
+              <h1 className="page-title">{editingVehicleId ? 'Editar Vehículo' : 'Agregar Nuevo Vehículo'}</h1>
+              <p className="page-subtitle">{editingVehicleId ? 'Actualiza la información del vehículo' : 'Completa la información del vehículo para agregarlo al inventario'}</p>
             </div>
           </div>
 
@@ -250,7 +263,7 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
 
             <div className="form-actions">
               <button type="button" className="btn-secondary" onClick={handleAddCancel}>Cancelar</button>
-              <button type="submit" className="btn-primary">Guardar Vehículo</button>
+              <button type="submit" className="btn-primary">{editingVehicleId ? 'Guardar Cambios' : 'Guardar Vehículo'}</button>
             </div>
           </form>
         </div>
@@ -270,7 +283,18 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
           {/* Stats Cards */}
           <div className="vehicle-stats">
             <div className="stat-card-simple">
-              <div className="stat-icon">🚗</div>
+              <div className="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-car-suv" width="36" height="36" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M5 17a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path>
+                    <path d="M16 17a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path>
+                    <path d="M5 9l2 -4h7.438a2 2 0 0 1 1.94 1.515l.622 2.485h3a2 2 0 0 1 2 2v3"></path>
+                    <path d="M10 9v-4"></path>
+                    <path d="M2 7v4"></path>
+                    <path d="M22.001 14.001a4.992 4.992 0 0 0 -4.001 -2.001a4.992 4.992 0 0 0 -4 2h-3a4.998 4.998 0 0 0 -8.003 .003"></path>
+                    <path d="M5 12v-3h13"></path>
+                </svg>
+              </div>
               <div className="stat-content">
                 <div className="stat-value">{stats.total}</div>
                 <div className="stat-label">Total Vehículos</div>
@@ -286,7 +310,17 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
             </div>
 
             <div className="stat-card-simple">
-              <div className="stat-icon">⏱</div>
+              <div className="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-calendar-time" width="36" height="36" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4"></path>
+                    <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
+                    <path d="M15 3v4"></path>
+                    <path d="M7 3v4"></path>
+                    <path d="M3 11h16"></path>
+                    <path d="M18 16.496v1.504l1 1"></path>
+                </svg>
+              </div>
               <div className="stat-content">
                 <div className="stat-value">{stats.rented}</div>
                 <div className="stat-label">Alquilados</div>
@@ -294,7 +328,14 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
             </div>
 
             <div className="stat-card-simple">
-              <div className="stat-icon">⚠️</div>
+              <div className="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-urgent" width="36" height="36" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M8 16v-4a4 4 0 0 1 8 0v4"></path>
+                    <path d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7"></path>
+                    <path d="M6 16m0 1a1 1 0 0 1 1 -1h10a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+                </svg>
+              </div>
               <div className="stat-content">
                 <div className="stat-value">{stats.maintenance}</div>
                 <div className="stat-label">En Mantenimiento</div>
@@ -330,8 +371,9 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
                 <VehicleCard
                   key={vehicle.id}
                   vehicle={vehicle}
-                  onViewDetails={() => handleViewDetails(vehicle.id)}
-                  onMenuClick={() => handleVehicleMenu(vehicle.id)}
+                  onViewDetails={() => handleViewDetails(vehicle)}
+                  onEditVehicle={() => handleStartEditVehicle(vehicle)}
+                  onDeleteVehicle={() => handleDeleteVehicle(vehicle.id)}
                 />
               ))}
             </div>
@@ -342,6 +384,15 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
               </div>
             )}
           </div>
+          {selectedVehicle && (
+            <VehicleDetailsModal
+              vehicle={selectedVehicle}
+              onClose={() => setSelectedVehicle(null)}
+              onEdit={(v) => { setSelectedVehicle(null); handleStartEditVehicle(v); }}
+              onDelete={(id) => { handleDeleteVehicle(id); setSelectedVehicle(null); }}
+              onChangeStatus={handleChangeStatus}
+            />
+          )}
         </>
       )}
     </div>

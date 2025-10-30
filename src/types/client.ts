@@ -7,6 +7,8 @@ export interface Client {
   contracts: number;
   status: 'Activo' | 'Inactivo';
   avatar?: string;
+  // Fecha de creación del cliente (ISO string)
+  createdAt?: string;
 }
 
 export interface ClientStats {

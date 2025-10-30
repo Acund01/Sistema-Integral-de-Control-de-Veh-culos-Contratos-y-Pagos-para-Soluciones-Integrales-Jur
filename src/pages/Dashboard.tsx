@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import StatCard from '../components/StatCard';
 import QuickActionCard from '../components/QuickActionCard';
 import ActivityList from '../components/ActivityList';
@@ -9,39 +9,73 @@ import documentosGif from '../assets/documentos.gif';
 import dineroGif from '../assets/dinero.gif';
 import '../styles/Dashboard.css';
 import type { StatCard as StatCardType, QuickAction, Activity, Alert } from '../types';
+import type { Client } from '../types/client';
+import type { Vehicle } from '../types/vehicle';
+import type { Contract } from '../types/contract';
 
 interface DashboardProps {
   onNavigate?: (menuId: string) => void;
+  clients?: Client[];
+  vehicles?: Vehicle[];
+  contracts?: Contract[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate, clients = [], vehicles = [], contracts = [] }) => {
+  // Cálculo de estadísticas en base a datos reales
+  const computedStats = useMemo(() => {
+    const today = new Date();
+    const clamp = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    const activeClients = clients.filter(c => c.status === 'Activo').length;
+    const availableVehicles = vehicles.filter(v => v.status === 'Disponible').length;
+    const activeContracts = contracts.filter(c => c.status === 'Activo' && clamp(new Date(c.endDate)) >= clamp(today)).length;
+
+    // Ingresos del mes (prorrateado por días dentro del mes)
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const clampDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const daysBetweenInclusive = (a: Date, b: Date) => Math.max(0, Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+
+    const monthlyIncome = contracts.reduce((acc, c) => {
+      const start = clampDate(new Date(c.startDate));
+      const end = clampDate(new Date(c.endDate));
+      const startOverlap = start < monthStart ? monthStart : start;
+      const endOverlap = end > monthEnd ? monthEnd : end;
+      if (endOverlap < monthStart || startOverlap > monthEnd) return acc;
+      const days = daysBetweenInclusive(startOverlap, endOverlap);
+      return acc + days * (c.dailyRate || 0);
+    }, 0);
+
+    return { activeClients, availableVehicles, activeContracts, monthlyIncome };
+  }, [clients, vehicles, contracts]);
+
   const stats: StatCardType[] = [
     {
       title: 'Clientes Activos',
-      value: '127',
-      change: '+12% vs mes anterior',
-      changeType: 'positive',
+      value: computedStats.activeClients,
+      change: '—',
+      changeType: 'neutral',
       icon: <img src={clienteGif} alt="Clientes" style={{ width: 70, height: 70 }} /> ,
     },
     {
       title: 'Vehículos Disponibles',
-      value: '34',
-      change: '+2 nuevos este mes',
-      changeType: 'positive',
+      value: computedStats.availableVehicles,
+      change: '—',
+      changeType: 'neutral',
       icon:<img src={vehiculoGif} alt="Vehículos" style={{ width: 70, height: 70 }} /> ,
     },
     {
       title: 'Contratos Activos',
-      value: '89',
-      change: '+8% vs mes anterior',
-      changeType: 'positive',
+      value: computedStats.activeContracts,
+      change: '—',
+      changeType: 'neutral',
       icon: <img src={documentosGif} alt="Documentos" style={{ width: 70, height: 70 }} /> ,
     },
     {
       title: 'Ingresos del Mes',
-      value: 'S/. 45,230',
-      change: '+15% vs mes anterior',
-      changeType: 'positive',
+      value: `S/. ${computedStats.monthlyIncome.toLocaleString()}`,
+      change: '—',
+      changeType: 'neutral',
       icon: <img src={dineroGif} alt="Dinero" style={{ width: 70, height: 70 }} /> ,
     },
   ];
@@ -125,6 +159,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       return;
     }
 
+    // Si se selecciona 'Nuevo Contrato' (id '3')
+    if (actionId === '3') {
+      onNavigate?.('crear-contrato');
+      return;
+    }
+
+    // Si se selecciona 'Ver Reportes' (id '4')
+    if (actionId === '4') {
+      onNavigate?.('reportes');
+      return;
+    }
+
     // Lógica por defecto para otras acciones
     // (por ejemplo, abrir modales o navegar a otras secciones)
   };
@@ -156,9 +202,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="quick-actions-grid">
             {quickActions.map((action) => (
               <QuickActionCard
-                key={action.id}
+                key={String(action.id)}
                 {...action}
-                onClick={() => handleQuickAction(action.id)}
+                onClick={() => handleQuickAction(String(action.id))}
               />
             ))}
           </div>
@@ -179,9 +225,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="alerts-grid">
           {alerts.map((alert) => (
             <AlertCard
-              key={alert.id}
+              key={String(alert.id)}
               {...alert}
-              onView={() => handleAlertView(alert.id)}
+              onView={() => handleAlertView(String(alert.id))}
             />
           ))}
         </div>

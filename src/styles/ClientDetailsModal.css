@@ -1,0 +1,129 @@
+/* Overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+/* Card */
+.modal-card {
+  width: 100%;
+  max-width: 720px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.2);
+  overflow: hidden;
+  animation: modal-in 180ms ease-out;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.modal-title-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-avatar {
+  height: 40px;
+  width: 40px;
+  border-radius: 999px;
+  background: #eef2ff;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.status-badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #374151;
+}
+.status-badge.active { background: #dcfce7; color: #166534; }
+.status-badge.inactive { background: #fee2e2; color: #991b1b; }
+
+.modal-close {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b7280;
+}
+.modal-close:hover { color: #111827; }
+
+.modal-body {
+  padding: 16px 20px 4px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+}
+
+.detail-row { display: contents; }
+.detail-label { color: #6b7280; font-size: 13px; }
+.detail-value { color: #111827; font-weight: 500; }
+.monospace { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+.modal-note {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #6b7280;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid #eef2f7;
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-secondary { background: #fff; border-color: #e5e7eb; color: #111827; }
+.btn-secondary:hover { background: #f9fafb; }
+.btn-primary { background: #111827; color: #fff; }
+.btn-primary:hover { background: #0b1220; }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+
+@media (max-width: 640px) {
+  .details-grid { grid-template-columns: 1fr; }
+}

@@ -121,6 +121,52 @@
   color: #1f2937;
 }
 
+/* Menu desplegable */
+.client-menu-wrapper {
+  position: relative;
+}
+
+.client-menu {
+  position: absolute;
+  right: 0;
+  top: 110%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 200px;
+  padding: 0.25rem;
+  z-index: 20;
+}
+
+.client-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.client-menu-item:hover {
+  background: #f3f4f6;
+}
+
+.client-menu-item.danger {
+  color: #b91c1c;
+}
+
+.menu-icon {
+  width: 18px;
+  display: inline-flex;
+  justify-content: center;
+}
+
 @media (max-width: 768px) {
   .client-card {
     flex-direction: column;

@@ -31,6 +31,31 @@
   border: 1px solid #f0f0f0;
 }
 
+.form-errors {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.form-errors ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.has-error {
+  border-color: #ef4444 !important;
+  background: #fff7f7 !important;
+}
+
+.error-text {
+  color: #b91c1c;
+  font-size: 0.8rem;
+  margin-top: 0.4rem;
+}
+
 .form-section {
   border-radius: 12px;
   padding: 1.25rem 1.5rem 1.5rem 1.5rem;

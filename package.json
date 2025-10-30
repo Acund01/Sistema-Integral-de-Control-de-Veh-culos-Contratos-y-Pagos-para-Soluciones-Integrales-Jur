@@ -7,9 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": " npm run dev"
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.35.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

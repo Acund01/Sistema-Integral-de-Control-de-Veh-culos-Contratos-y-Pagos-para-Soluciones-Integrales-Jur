@@ -79,6 +79,10 @@
   background-color: #fef3c7;
   color: #92400e;
 }
+.contract-status-badge.inactivo {
+  background-color: #e5e7eb;
+  color: #374151;
+}
 
 .contract-details {
   display: flex;
@@ -212,6 +216,43 @@
 .btn-contract-menu:hover {
   background-color: #e2e8f0;
 }
+.contract-menu-wrapper { position: relative; }
+.contract-menu { position: absolute; right: 0; top: 100%; margin-top: 6px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); min-width: 220px; z-index: 20; overflow: hidden; }
+.contract-menu-item { width: 100%; text-align: left; background: transparent; border: none; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; color: #111827; }
+.contract-menu-item:hover { background: #f9fafb; }
+.contract-menu-item.danger { color: #b91c1c; }
+.menu-icon { opacity: 0.75; }
+
+/* Dropdown menú contrato */
+.contract-menu-wrapper { position: relative; }
+.contract-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  min-width: 220px;
+  z-index: 20;
+  overflow: hidden;
+}
+.contract-menu-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #111827;
+}
+.contract-menu-item:hover { background: #f9fafb; }
+.contract-menu-item.danger { color: #b91c1c; }
+.menu-icon { opacity: 0.75; }
 
 @media (max-width: 768px) {
   .contract-card {
