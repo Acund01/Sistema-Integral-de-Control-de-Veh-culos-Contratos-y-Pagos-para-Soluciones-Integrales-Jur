@@ -1,9 +1,36 @@
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://127.0.0.1:9100
+      client:
+        registration:
+          client-app:
+            provider: spring
+            client-id: gateway-app
+            client-secret: 12345
+            authorization-grant-type: authorization_code
+            redirect-uri: http://127.0.0.1:8090/authorized
+            scope:
+              - openid
+              - profile
+            client-name: client-app
+        provider:
+          spring:
+            issuer-uri: http://127.0.0.1:9100
   cloud:
     gateway:
       server:
-        webmvc:
+        webflux:
           routes:
+            - id: msvc-oauth
+              uri: lb://msvc-oauth
+              predicates:
+                - Path=/api/security/**
+              filters:
+                - StripPrefix=2
+
             - id: msvc-users
               uri: lb://msvc-users
               predicates:
@@ -48,3 +75,6 @@ spring:
               uri: lb://msvc-reportes
               predicates:
                 - Path=/api/reportes/**
+logging:
+  level:
+    org.springframework.cloud.gateway.server.mvc: DEBUG
