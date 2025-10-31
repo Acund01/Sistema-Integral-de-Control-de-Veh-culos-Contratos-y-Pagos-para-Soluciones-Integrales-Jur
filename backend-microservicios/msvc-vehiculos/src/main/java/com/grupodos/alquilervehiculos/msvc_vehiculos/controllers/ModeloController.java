@@ -18,6 +18,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class ModeloController {
 
     private final ModeloService modeloService;

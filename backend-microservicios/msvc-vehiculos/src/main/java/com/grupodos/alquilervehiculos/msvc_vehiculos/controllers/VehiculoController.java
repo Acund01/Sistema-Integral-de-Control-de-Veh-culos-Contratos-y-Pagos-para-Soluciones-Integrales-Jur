@@ -20,10 +20,10 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/vehiculos")
-@CrossOrigin(origins = "http://localhost:3000")
 @Slf4j
 @RequiredArgsConstructor
 @Validated
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class VehiculoController {
 
     private final VehiculoService vehiculoService;
