@@ -1,21 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import '../styles/RegisterClient.css';
-import type { ClienteNaturalDto, ClienteEmpresaDto } from '../types/client';
-import { clienteService } from '../services/clienteService';
-
-// Tipo local de compatibilidad con componentes padres (si lo usan)
-type LegacyClientPayload = {
-  nombres?: string;
-  apellidos?: string;
-  correo?: string;
-  telefono?: string;
-  ciudad?: string;
-};
+import type { Client } from '../types/client';
 
 interface RegisterClientProps {
   onNavigate?: (menuId: string) => void;
   onAddClient?: (
-    client: LegacyClientPayload
+    client: Partial<Client> & {
+      nombres?: string;
+      apellidos?: string;
+      correo?: string;
+      telefono?: string;
+      ciudad?: string;
+    }
   ) => void;
   // Soporte de edición
   clientId?: string; // si viene, estamos editando
@@ -46,7 +42,13 @@ interface RegisterClientProps {
   }>;
   onUpdateClient?: (
     id: string,
-    client: LegacyClientPayload
+    client: Partial<Client> & {
+      nombres?: string;
+      apellidos?: string;
+      correo?: string;
+      telefono?: string;
+      ciudad?: string;
+    }
   ) => void;
 }
 
@@ -166,7 +168,7 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
     onNavigate?.('dashboard');
   };
 
-  const handleValidatedSubmit = async (e: React.FormEvent) => {
+  const handleValidatedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const currentErrors = validate(form, clientType);
     setErrors(currentErrors);
@@ -176,65 +178,29 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
     setTouched((prev) => ({ ...prev, ...touchedAll }));
     if (Object.keys(currentErrors).length > 0) return;
 
-    try {
-      if (clientType === 'natural') {
-        const dto: ClienteNaturalDto = {
-          nombre: form.nombres ?? '',
-          apellido: form.apellidos ?? '',
-          tipoDocumento: (form.tipoDocumento || '').toUpperCase(),
-          numeroDocumento: form.numeroDocumento ?? '',
-          correo: form.correo ?? '',
-          telefono: form.telefono ?? '',
-          direccion: form.direccion ?? '',
-        };
-        if (clientId) {
-          await clienteService.updateNatural(clientId, dto);
-        } else {
-          await clienteService.createNatural(dto);
-        }
-      } else {
-        const dto: ClienteEmpresaDto = {
-          razonSocial: form.razonSocial ?? '',
-          ruc: form.ruc ?? '',
-          giroComercial: form.giroComercial ?? '',
-          direccionFiscal: form.direccionFiscal ?? '',
-          correo: form.correo ?? '',
-          telefono: form.telefono ?? '',
-          direccion: form.direccion ?? '',
-          representante: {
-            nombre: form.representanteNombres ?? '',
-            apellido: form.representanteApellidos ?? '',
-            tipoDocumento: (form.representanteTipoDocumento || '').toUpperCase(),
-            numeroDocumento: form.representanteNumeroDocumento ?? '',
-            cargo: form.representanteCargo ?? '',
-            correo: form.representanteCorreo ?? '',
-            telefono: form.representanteTelefono ?? '',
-          },
-        };
-        if (clientId) {
-          await clienteService.updateEmpresa(clientId, dto);
-        } else {
-          await clienteService.createEmpresa(dto);
-        }
-      }
+    const payload = {
+      nombres: form.nombres,
+      apellidos: form.apellidos,
+      correo: form.correo,
+      telefono: form.telefono,
+      ciudad: form.ciudad,
+    } as Partial<Client> & {
+      nombres?: string;
+      apellidos?: string;
+      correo?: string;
+      telefono?: string;
+      ciudad?: string;
+    };
 
-      // Compatibilidad opcional con padres
-      const payload: LegacyClientPayload = {
-        nombres: form.nombres,
-        apellidos: form.apellidos,
-        correo: form.correo,
-        telefono: form.telefono,
-        ciudad: form.ciudad,
-      };
-      if (clientId && onUpdateClient) onUpdateClient(clientId, payload);
-      if (!clientId && onAddClient) onAddClient(payload);
-
-      alert(clientId ? 'Cliente actualizado' : 'Cliente registrado');
-      onNavigate?.('clientes');
-    } catch (err) {
-      console.error(err);
-      alert(`Error al ${clientId ? 'actualizar' : 'registrar'} cliente: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+    if (clientId && onUpdateClient) {
+      onUpdateClient(clientId, payload);
+    } else {
+      // Enviar datos mínimos al padre si se proporcionó la prop
+      onAddClient?.(payload);
     }
+
+    // Después de guardar, volver al listado
+    onNavigate?.('clientes');
   };
 
   return (

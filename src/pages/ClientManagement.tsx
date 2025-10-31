@@ -1,68 +1,118 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import ClientCard from '../components/ClientCard';
 import ClientDetailsModal from '../components/ClientDetailsModal';
 import '../styles/ClientManagement.css';
-import type { Client, ClientStats } from '../types/client';
+import type { ClienteUnion, ClientStats } from '../types/client';
+import { clienteService } from '../services/clienteService';
 
 
 interface ClientManagementProps {
-  clients?: Client[];
   onNavigate?: (menuId: string) => void;
-  onDeleteClient?: (id: string) => void;
-  onEditClient?: (client: Client) => void;
-  onChangeClientStatus?: (id: string, status: Client['status']) => void;
 }
 
-const ClientManagement: React.FC<ClientManagementProps> = ({ clients = [], onNavigate, onDeleteClient, onEditClient, onChangeClientStatus }) => {
+const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClienteUnion | null>(null);
+  const [clients, setClients] = useState<ClienteUnion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Cargar clientes al montar el componente
+  useEffect(() => {
+    loadClients();
+  }, []);
+
+  const loadClients = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const clientesData = await clienteService.findAll();
+      setClients(clientesData);
+    } catch (err) {
+      console.error('Error al cargar clientes:', err);
+      setError(err instanceof Error ? err.message : 'Error desconocido al cargar clientes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper para obtener el nombre completo del cliente
+  const getClientFullName = (client: ClienteUnion): string => {
+    if (client.tipoCliente === 'NATURAL') {
+      return `${client.nombre} ${client.apellido}`;
+    } else {
+      return client.razonSocial;
+    }
+  };
 
   const stats: ClientStats = useMemo(() => {
     const total = clients.length;
-    const active = clients.filter(c => c.status === 'Activo').length;
+    const active = clients.filter(c => c.activo).length;
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
     const newThisMonth = clients.filter(c => {
-      // Preferir createdAt; fallback a timestamp numérico en id si aplica
-      let created: Date | null = null;
-      if (c.createdAt) {
-        const d = new Date(c.createdAt);
-        if (!isNaN(d.getTime())) created = d;
-      } else if (/^\d{10,}$/.test(c.id)) {
-        const d = new Date(Number(c.id));
-        if (!isNaN(d.getTime())) created = d;
-      }
-      if (!created) return false;
+      const created = new Date(c.creadoEn);
+      if (isNaN(created.getTime())) return false;
       return created.getFullYear() === year && created.getMonth() === month;
     }).length;
     return { total, active, newThisMonth };
   }, [clients]);
 
-  // `clients` prop is the source of truth; if empty, you may show a placeholder list or none.
-
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClients = clients.filter(client => {
+    const fullName = getClientFullName(client).toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      fullName.includes(searchLower) ||
+      client.correo.toLowerCase().includes(searchLower) ||
+      (client.direccion && client.direccion.toLowerCase().includes(searchLower))
+    );
+  });
 
   const handleNewClient = () => {
     onNavigate?.('register-client');
   };
 
-  const handleViewDetails = (client: Client) => {
+  const handleViewDetails = (client: ClienteUnion) => {
     setSelectedClient(client);
   };
 
-  const handleEdit = (client: Client) => {
-    // Por ahora navegamos al registro para editar/crear
-    onEditClient?.(client);
+  const handleEdit = (client: ClienteUnion) => {
+    // TODO: Implementar edición con navegación a RegisterClient pasando el cliente
+    console.log('Editar cliente:', client);
     onNavigate?.('register-client');
   };
 
-  const handleDelete = (id: string) => {
-    onDeleteClient?.(id);
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+      return;
+    }
+    
+    try {
+      await clienteService.delete(id);
+      alert('Cliente eliminado exitosamente');
+      // Recargar la lista
+      await loadClients();
+    } catch (err) {
+      console.error('Error al eliminar cliente:', err);
+      alert(`Error al eliminar cliente: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+    }
+  };
+
+  const handleChangeStatus = async (id: string, activo: boolean) => {
+    try {
+      // El backend hace soft delete, así que para cambiar el estado
+      // necesitamos implementar un endpoint específico o usar delete para desactivar
+      if (!activo) {
+        await clienteService.delete(id);
+      }
+      // Recargar la lista
+      await loadClients();
+      setSelectedClient(null);
+    } catch (err) {
+      console.error('Error al cambiar estado:', err);
+      alert(`Error al cambiar estado: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+    }
   };
 
   const handleFilters = () => {
@@ -83,8 +133,21 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ clients = [], onNav
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Loading y Error States */}
+      {loading && (
+        <div className="loading-message" style={{ padding: '20px', textAlign: 'center' }}>
+          Cargando clientes...
+        </div>
+      )}
       
+      {error && (
+        <div className="error-message" style={{ padding: '20px', textAlign: 'center', color: '#ef4444' }}>
+          Error: {error}
+        </div>
+      )}
+
+      {/* Stats Cards */}
+      {!loading && !error && (
       <div className="client-stats">
         <div className="stat-card-simple">
           <div className="stat-icon">
@@ -107,17 +170,14 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ clients = [], onNav
               client={selectedClient}
               onClose={() => setSelectedClient(null)}
               onEdit={(client) => {
-                onEditClient?.(client);
+                handleEdit(client);
                 setSelectedClient(null);
-                onNavigate?.('register-client');
               }}
               onDelete={(id) => {
-                onDeleteClient?.(id);
-                setSelectedClient(null);
+                handleDelete(id);
               }}
-              onChangeStatus={(id, status) => {
-                onChangeClientStatus?.(id, status);
-                setSelectedClient(prev => (prev && prev.id === id ? { ...prev, status } : prev));
+              onChangeStatus={(id, activo) => {
+                handleChangeStatus(id, activo);
               }}
             />
           )}
@@ -151,8 +211,10 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ clients = [], onNav
           </div>
         </div>
       </div>
+      )}
 
       {/* Client List */}
+      {!loading && !error && (
       <div className="client-list-section">
         <h2 className="section-title">Lista de Clientes</h2>
         
@@ -190,6 +252,7 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ clients = [], onNav
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

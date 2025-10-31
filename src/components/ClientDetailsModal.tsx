@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
-import type { Client } from '../types/client';
+import React, { useEffect, useMemo } from 'react';
+import type { ClienteUnion } from '../types/client';
 import '../styles/ClientDetailsModal.css';
 
 interface ClientDetailsModalProps {
-  client: Client;
+  client: ClienteUnion;
   onClose: () => void;
-  onEdit?: (client: Client) => void;
+  onEdit?: (client: ClienteUnion) => void;
   onDelete?: (id: string) => void;
-  onChangeStatus?: (id: string, status: Client['status']) => void;
+  onChangeStatus?: (id: string, activo: boolean) => void;
 }
 
 const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose, onEdit, onDelete, onChangeStatus }) => {
@@ -19,16 +19,22 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const displayName = useMemo(() => (
+    client.tipoCliente === 'NATURAL'
+      ? `${client.nombre} ${client.apellido}`
+      : client.razonSocial
+  ), [client]);
+
   const handleDelete = () => {
     if (onDelete) {
-      if (confirm(`¿Eliminar al cliente "${client.name}"?`)) {
+      if (confirm(`¿Eliminar al cliente "${displayName}"?`)) {
         onDelete(client.id);
         onClose();
       }
     }
   };
 
-  const created = client.createdAt ? new Date(client.createdAt) : null;
+  const created = client.creadoEn ? new Date(client.creadoEn) : null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -37,8 +43,8 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
           <div className="modal-title-area">
             <div className="modal-avatar">👤</div>
             <div>
-              <h2 id="client-details-title" className="modal-title">{client.name}</h2>
-              <div className={`status-badge ${client.status.toLowerCase()}`}>{client.status}</div>
+              <h2 id="client-details-title" className="modal-title">{displayName}</h2>
+              <div className={`status-badge ${client.activo ? 'activo' : 'inactivo'}`}>{client.activo ? 'Activo' : 'Inactivo'}</div>
             </div>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
@@ -48,19 +54,15 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
           <div className="details-grid">
             <div className="detail-row">
               <div className="detail-label">Correo</div>
-              <div className="detail-value">{client.email || '—'}</div>
+              <div className="detail-value">{client.correo || '—'}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Teléfono</div>
-              <div className="detail-value">{client.phone || '—'}</div>
+              <div className="detail-value">{client.telefono || '—'}</div>
             </div>
             <div className="detail-row">
-              <div className="detail-label">Ciudad</div>
-              <div className="detail-value">{client.location || '—'}</div>
-            </div>
-            <div className="detail-row">
-              <div className="detail-label">Contratos</div>
-              <div className="detail-value">{client.contracts}</div>
+              <div className="detail-label">Dirección</div>
+              <div className="detail-value">{client.direccion || '—'}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">ID</div>
@@ -70,31 +72,67 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
               <div className="detail-label">Creado</div>
               <div className="detail-value">{created ? created.toLocaleString() : '—'}</div>
             </div>
-          </div>
-
-          <div className="modal-note">
-            Nota: mostramos los campos actualmente guardados. Si deseas ver también documento, notas o datos de empresa, puedo guardar ese payload ampliado y mostrarlo aquí.
+            {client.tipoCliente === 'NATURAL' ? (
+              <>
+                <div className="detail-row">
+                  <div className="detail-label">Documento</div>
+                  <div className="detail-value">{client.tipoDocumento}: {client.numeroDocumento}</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="detail-row">
+                  <div className="detail-label">RUC</div>
+                  <div className="detail-value">{client.ruc}</div>
+                </div>
+                <div className="detail-row">
+                  <div className="detail-label">Razón Social</div>
+                  <div className="detail-value">{client.razonSocial}</div>
+                </div>
+                {client.representante && (
+                  <>
+                    <div className="detail-row">
+                      <div className="detail-label">Representante</div>
+                      <div className="detail-value">{client.representante.nombre} {client.representante.apellido}</div>
+                    </div>
+                    <div className="detail-row">
+                      <div className="detail-label">Doc. Representante</div>
+                      <div className="detail-value">{client.representante.tipoDocumento}: {client.representante.numeroDocumento}</div>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
 
           {onChangeStatus && (
             <div className="modal-note" style={{ marginTop: 12 }}>
               <div style={{ marginBottom: 8, fontWeight: 600, color: '#374151' }}>Cambiar estado</div>
               <div style={{ display: 'flex', gap: 8 }}>
-                {(['Activo','Inactivo'] as Client['status'][]).map(s => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => onChangeStatus(client.id, s)}
-                    className={"btn-secondary"}
-                    style={{
-                      borderColor: client.status === s ? '#111827' : undefined,
-                      background: client.status === s ? '#111827' : undefined,
-                      color: client.status === s ? '#fff' : undefined,
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => onChangeStatus(client.id, true)}
+                  className={"btn-secondary"}
+                  style={{
+                    borderColor: client.activo ? '#111827' : undefined,
+                    background: client.activo ? '#111827' : undefined,
+                    color: client.activo ? '#fff' : undefined,
+                  }}
+                >
+                  Activo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChangeStatus(client.id, false)}
+                  className={"btn-secondary"}
+                  style={{
+                    borderColor: !client.activo ? '#111827' : undefined,
+                    background: !client.activo ? '#111827' : undefined,
+                    color: !client.activo ? '#fff' : undefined,
+                  }}
+                >
+                  Inactivo
+                </button>
               </div>
             </div>
           )}

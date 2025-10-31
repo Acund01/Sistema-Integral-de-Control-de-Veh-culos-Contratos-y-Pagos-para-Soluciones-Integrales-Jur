@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import '../styles/ClientCard.css';
-import type { Client } from '../types/client';
+import type { ClienteUnion } from '../types/client';
 
 interface ClientCardProps {
-  client: Client;
-  onViewDetails?: (client: Client) => void;
-  onEditClient?: (client: Client) => void;
+  client: ClienteUnion;
+  onViewDetails?: (client: ClienteUnion) => void;
+  onEditClient?: (client: ClienteUnion) => void;
   onDeleteClient?: (id: string) => void;
 }
 
@@ -23,6 +23,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onViewDetails, onEditCl
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
+  const displayName = useMemo(() => (
+    client.tipoCliente === 'NATURAL'
+      ? `${client.nombre} ${client.apellido}`
+      : client.razonSocial
+  ), [client]);
+
   const handleView = () => {
     if (onViewDetails) onViewDetails(client);
     setOpen(false);
@@ -35,7 +41,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onViewDetails, onEditCl
 
   const handleDelete = () => {
     if (onDeleteClient) {
-      if (confirm(`¿Eliminar al cliente "${client.name}"?`)) {
+      if (confirm(`¿Eliminar al cliente "${displayName}"?`)) {
         onDeleteClient(client.id);
       }
     }
@@ -55,31 +61,26 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onViewDetails, onEditCl
       </div>
       
       <div className="client-info">
-        <h3 className="client-name">{client.name}</h3>
+        <h3 className="client-name">{displayName}</h3>
         <div className="client-details">
           <span className="client-detail">
             <span className="detail-icon">✉️</span>
-            {client.email}
+            {client.correo || '—'}
           </span>
           <span className="client-detail">
             <span className="detail-icon">📞</span>
-            {client.phone}
+            {client.telefono || '—'}
           </span>
           <span className="client-detail">
             <span className="detail-icon">📍</span>
-            {client.location}
+            {client.direccion || '—'}
           </span>
         </div>
       </div>
 
-      <div className="client-contracts">
-        <span className="contracts-number">{client.contracts}</span>
-        <span className="contracts-label">Contratos</span>
-      </div>
-
       <div className="client-status">
-        <span className={`status-badge ${client.status.toLowerCase()}`}>
-          {client.status}
+        <span className={`status-badge ${client.activo ? 'activo' : 'inactivo'}`}>
+          {client.activo ? 'Activo' : 'Inactivo'}
         </span>
       </div>
 
