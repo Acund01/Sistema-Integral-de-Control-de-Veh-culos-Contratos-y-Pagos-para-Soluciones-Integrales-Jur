@@ -1,13 +1,29 @@
 import type { ContratoRequestDto, ContratoResponseDto } from '../types/contract';
 
-const API_BASE_URL = (import.meta as ImportMeta).env?.VITE_CONTRATOS_BASE_URL ?? '/api/contratos';
+// URL base robusta: si la env está vacía o en blanco, usar proxy '/api/contratos'
+const ENV_URL = (import.meta as ImportMeta).env?.VITE_CONTRATOS_BASE_URL as string | undefined;
+const API_BASE_URL = ENV_URL && ENV_URL.trim() ? ENV_URL.trim() : '/api/contratos';
 
 class ContratoService {
   /** GET /api/contratos */
   async findAll(): Promise<ContratoResponseDto[]> {
     const res = await fetch(`${API_BASE_URL}`);
-    if (!res.ok) throw new Error(`Error al obtener contratos: ${res.statusText}`);
-    return res.json();
+    if (!res.ok) throw new Error(`Error al obtener contratos: ${res.status} ${res.statusText}`);
+    const data = await res.json();
+    // Aceptar varias formas de respuesta: arreglo directo o envuelto (Spring Page u otros)
+    type Page<T> = { content: T[] };
+    type Items<T> = { items: T[] };
+    type DataWrap<T> = { data: T[] };
+    const d = data as ContratoResponseDto[] | Page<ContratoResponseDto> | Items<ContratoResponseDto> | DataWrap<ContratoResponseDto> | unknown;
+    if (Array.isArray(d)) return d;
+    if (d && typeof d === 'object') {
+      const obj = d as Record<string, unknown>;
+      if (Array.isArray((obj as Page<ContratoResponseDto>).content)) return (obj as Page<ContratoResponseDto>).content;
+      if (Array.isArray((obj as Items<ContratoResponseDto>).items)) return (obj as Items<ContratoResponseDto>).items;
+      if (Array.isArray((obj as DataWrap<ContratoResponseDto>).data)) return (obj as DataWrap<ContratoResponseDto>).data;
+    }
+    // Si no es un arreglo reconocible, retornamos vacío para no romper la UI
+    return [];
   }
 
   /** GET /api/contratos/{id} */

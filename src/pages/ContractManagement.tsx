@@ -12,23 +12,35 @@ interface ContractManagementProps {
   onStartEditContract?: (contract: ContratoResponseDto) => void;
 }
 
-const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, contracts = [], onDeleteContract, onStartEditContract }) => {
+const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, contracts, onDeleteContract, onStartEditContract }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedContract, setSelectedContract] = useState<ContratoResponseDto | null>(null);
-  const [items, setItems] = useState<ContratoResponseDto[]>(contracts);
+  const [items, setItems] = useState<ContratoResponseDto[]>(Array.isArray(contracts) ? contracts : []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { setItems(contracts); }, [contracts]);
+  // Si nos pasan contratos por props, sincronizamos una sola vez o cuando cambie realmente el array
   useEffect(() => {
-    if (contracts.length === 0) {
-      setLoading(true);
-      contratoService.findAll()
-        .then(setItems)
-        .catch(err => setError(err?.message || 'Error al cargar contratos'))
-        .finally(() => setLoading(false));
-    }
-  }, [contracts.length]);
+    if (Array.isArray(contracts)) setItems(contracts);
+  }, [contracts]);
+
+  // Cargar siempre al montar para asegurar datos frescos desde el backend
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        setLoading(true);
+  const data = await contratoService.findAll();
+  if (!cancelled) setItems(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (!cancelled) setError((err as Error)?.message || 'Error al cargar contratos');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   // Cálculo de estadísticas dinámicas según contratos recibidos
   const stats: ContractStats = useMemo(() => {
@@ -75,13 +87,11 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
   
 
   const filteredContracts = items.filter(contract => {
-    const t = searchTerm.toLowerCase();
+    const t = (searchTerm || '').toLowerCase();
+    const codigo = (contract.codigoContrato || '').toLowerCase();
+    const clienteNombre = (contract.cliente?.nombre || '').toLowerCase();
     const veh = `${contract.detalles?.[0]?.marcaVehiculo || ''} ${contract.detalles?.[0]?.modeloVehiculo || ''} ${contract.detalles?.[0]?.placaVehiculo || ''}`.toLowerCase();
-    return (
-      contract.codigoContrato?.toLowerCase().includes(t) ||
-      contract.cliente?.nombre?.toLowerCase().includes(t) ||
-      veh.includes(t)
-    );
+    return codigo.includes(t) || clienteNombre.includes(t) || veh.includes(t);
   });
 
   const handleNewContract = () => {
@@ -199,6 +209,15 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
           </button>
           <button className="btn-filters" onClick={handleStateFilter}>
             Estado
+          </button>
+          <button className="btn-filters" onClick={() => {
+            setLoading(true);
+            contratoService.findAll()
+              .then(setItems)
+              .catch(err => setError((err as Error)?.message || 'Error al cargar contratos'))
+              .finally(() => setLoading(false));
+          }}>
+            Refrescar
           </button>
         </div>
 
