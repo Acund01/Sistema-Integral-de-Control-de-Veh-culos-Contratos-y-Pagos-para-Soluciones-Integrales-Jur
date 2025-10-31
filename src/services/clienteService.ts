@@ -8,8 +8,8 @@ import type {
   ClienteReporteDto
 } from '../types/client';
 
-// URL base del microservicio de clientes
-const API_BASE_URL = 'http://localhost:8082/api/clientes';
+// URL base del microservicio de clientes (usar proxy de Vite en dev)
+const API_BASE_URL = (import.meta as ImportMeta).env?.VITE_CLIENTES_BASE_URL ?? '/api/clientes';
 
 /**
  * Servicio para consumir el API REST del microservicio de Clientes

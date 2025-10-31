@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
-import type { Vehicle } from '../types/vehicle';
+import type { Vehiculo, EstadoVehiculo, TipoCombustible } from '../types/vehicle';
 import '../styles/ClientDetailsModal.css';
 
 interface VehicleDetailsModalProps {
-  vehicle: Vehicle;
+  vehicle: Vehiculo;
   onClose: () => void;
-  onEdit?: (vehicle: Vehicle) => void;
+  onEdit?: (vehicle: Vehiculo) => void;
   onDelete?: (id: string) => void;
-  onChangeStatus?: (id: string, status: Vehicle['status']) => void;
+  onChangeStatus?: (id: string, status: EstadoVehiculo) => void;
 }
 
 const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onClose, onEdit, onDelete, onChangeStatus }) => {
@@ -19,10 +19,21 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
 
   const handleDelete = () => {
     if (onDelete) {
-      if (confirm(`¿Eliminar el vehículo ${vehicle.brand} ${vehicle.model}?`)) {
+      if (confirm(`¿Eliminar el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}?`)) {
         onDelete(vehicle.id);
         onClose();
       }
+    }
+  };
+
+  const prettyFuel = (f: TipoCombustible) => {
+    switch (f) {
+      case 'GASOLINA': return 'Gasolina';
+      case 'DIESEL': return 'Diésel';
+      case 'ELECTRICO': return 'Eléctrico';
+      case 'HIBRIDO': return 'Híbrido';
+      case 'GLP': return 'GLP';
+      default: return String(f);
     }
   };
 
@@ -33,8 +44,10 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
           <div className="modal-title-area">
             <div className="modal-avatar">🚗</div>
             <div>
-              <h2 id="vehicle-details-title" className="modal-title">{vehicle.brand} {vehicle.model}</h2>
-              <div className={`status-badge ${vehicle.status === 'Disponible' ? 'active' : 'inactive'}`}>{vehicle.status}</div>
+              <h2 id="vehicle-details-title" className="modal-title">{vehicle.modelo?.marca?.nombre} {vehicle.modelo?.nombre}</h2>
+              <div className={`status-badge ${vehicle.estado === 'DISPONIBLE' ? 'active' : 'inactive'}`}>
+                {vehicle.estado === 'DISPONIBLE' ? 'Disponible' : vehicle.estado === 'ALQUILADO' ? 'Alquilado' : 'Mantenimiento'}
+              </div>
             </div>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
@@ -44,23 +57,23 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
           <div className="details-grid">
             <div className="detail-row">
               <div className="detail-label">Tipo</div>
-              <div className="detail-value">{vehicle.type || '—'}</div>
+              <div className="detail-value">{vehicle.tipoVehiculo?.nombre || '—'}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Año</div>
-              <div className="detail-value">{vehicle.year}</div>
+              <div className="detail-value">{vehicle.anioFabricacion}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Placa</div>
-              <div className="detail-value">{vehicle.plate || '—'}</div>
+              <div className="detail-value">{vehicle.placa || '—'}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Combustible</div>
-              <div className="detail-value">{vehicle.fuel || '—'}</div>
+              <div className="detail-value">{vehicle.combustible ? prettyFuel(vehicle.combustible) : '—'}</div>
             </div>
             <div className="detail-row">
-              <div className="detail-label">Últ. mantenimiento</div>
-              <div className="detail-value">{vehicle.lastMaintenance || '—'}</div>
+              <div className="detail-label">Creado</div>
+              <div className="detail-value">{vehicle.creadoEn ? new Date(vehicle.creadoEn).toLocaleString() : '—'}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">ID</div>
@@ -72,19 +85,19 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
             <div className="modal-note" style={{ marginTop: 20 }}>
               <div style={{ marginBottom: 8, fontWeight: 600, color: '#374151' }}>Cambiar estado</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {(['Disponible','Mantenimiento','Alquilado'] as Vehicle['status'][]).map(s => (
+                {(['DISPONIBLE','MANTENIMIENTO','ALQUILADO'] as EstadoVehiculo[]).map(s => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => onChangeStatus(vehicle.id, s)}
                     className={"btn-secondary"}
                     style={{
-                      borderColor: vehicle.status === s ? '#111827' : undefined,
-                      background: vehicle.status === s ? '#111827' : undefined,
-                      color: vehicle.status === s ? '#fff' : undefined,
+                      borderColor: vehicle.estado === s ? '#111827' : undefined,
+                      background: vehicle.estado === s ? '#111827' : undefined,
+                      color: vehicle.estado === s ? '#fff' : undefined,
                     }}
                   >
-                    {s === 'Alquilado' ? 'Alquilando' : s}
+                    {s === 'ALQUILADO' ? 'Alquilado' : s === 'DISPONIBLE' ? 'Disponible' : 'Mantenimiento'}
                   </button>
                 ))}
               </div>

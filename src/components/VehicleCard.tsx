@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import '../styles/VehicleCard.css';
-import type { Vehicle } from '../types/vehicle';
+import type { Vehiculo, EstadoVehiculo, TipoCombustible } from '../types/vehicle';
 
 interface VehicleCardProps {
-  vehicle: Vehicle;
+  vehicle: Vehiculo;
   onViewDetails: () => void;
-  onEditVehicle?: (vehicle: Vehicle) => void;
+  onEditVehicle?: (vehicle: Vehiculo) => void;
   onDeleteVehicle?: (id: string) => void;
 }
 
@@ -24,15 +24,26 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
   }, []);
 
   const getStatusBadge = () => {
-    switch (vehicle.status) {
-      case 'Disponible':
+    switch (vehicle.estado as EstadoVehiculo) {
+      case 'DISPONIBLE':
         return <span className="status-badge disponible">✓ Disponible</span>;
-      case 'Alquilado':
+      case 'ALQUILADO':
         return <span className="status-badge alquilado">⏱ Alquilado</span>;
-      case 'Mantenimiento':
+      case 'MANTENIMIENTO':
         return <span className="status-badge mantenimiento">⚠ Mantenimiento</span>;
       default:
         return null;
+    }
+  };
+
+  const prettyFuel = (f: TipoCombustible) => {
+    switch (f) {
+      case 'GASOLINA': return 'Gasolina';
+      case 'DIESEL': return 'Diésel';
+      case 'ELECTRICO': return 'Eléctrico';
+      case 'HIBRIDO': return 'Híbrido';
+      case 'GLP': return 'GLP';
+      default: return String(f);
     }
   };
 
@@ -52,7 +63,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
                     <path d="M5 12v-3h13"></path>
                 </svg>
           </span>
-          <h3 className="vehicle-name">{vehicle.brand} {vehicle.model}</h3>
+          <h3 className="vehicle-name">{vehicle.modelo?.marca?.nombre} {vehicle.modelo?.nombre}</h3>
         </div>
         {getStatusBadge()}
       </div>
@@ -60,25 +71,25 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
       <div className="vehicle-details-grid">
         <div className="detail-row">
           <span className="detail-label">Tipo</span>
-          <span className="detail-value">{vehicle.type}</span>
+          <span className="detail-value">{vehicle.tipoVehiculo?.nombre}</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">Año</span>
-          <span className="detail-value">{vehicle.year}</span>
+          <span className="detail-value">{vehicle.anioFabricacion}</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">Placa</span>
-          <span className="detail-value">{vehicle.plate}</span>
+          <span className="detail-value">{vehicle.placa}</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">Combustible</span>
-          <span className="detail-value">{vehicle.fuel}</span>
+          <span className="detail-value">{prettyFuel(vehicle.combustible)}</span>
         </div>
       </div>
 
       <div className="vehicle-maintenance">
         <span className="maintenance-icon">📅</span>
-        <span className="maintenance-text">Últ. mantenimiento: {vehicle.lastMaintenance}</span>
+        <span className="maintenance-text">Creado: {new Date(vehicle.creadoEn).toLocaleDateString()}</span>
       </div>
 
       <div className="vehicle-actions">
@@ -97,7 +108,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
               </button>
               <button className="vehicle-menu-item danger" role="menuitem" onClick={() => {
                 if (onDeleteVehicle) {
-                  if (confirm(`¿Eliminar el vehículo ${vehicle.brand} ${vehicle.model}?`)) {
+                  if (confirm(`¿Eliminar el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}?`)) {
                     onDeleteVehicle(vehicle.id);
                   }
                 }

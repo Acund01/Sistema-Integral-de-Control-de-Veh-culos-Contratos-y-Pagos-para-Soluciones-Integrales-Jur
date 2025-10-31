@@ -1,35 +1,53 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ContractCard from '../components/ContractCard';
 import ContractDetailsModal from '../components/ContractDetailsModal';
 import '../styles/ContractManagement.css';
-import type { Contract, ContractStats } from '../types/contract';
+import type { ContratoResponseDto, ContractStats } from '../types/contract';
+import { contratoService } from '../services/contratoService';
 
 interface ContractManagementProps {
   onNavigate?: (menuId: string) => void;
-  contracts?: Contract[];
+  contracts?: ContratoResponseDto[];
   onDeleteContract?: (id: string) => void;
-  onStartEditContract?: (contract: Contract) => void;
+  onStartEditContract?: (contract: ContratoResponseDto) => void;
 }
 
 const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, contracts = [], onDeleteContract, onStartEditContract }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [selectedContract, setSelectedContract] = useState<ContratoResponseDto | null>(null);
+  const [items, setItems] = useState<ContratoResponseDto[]>(contracts);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => { setItems(contracts); }, [contracts]);
+  useEffect(() => {
+    if (contracts.length === 0) {
+      setLoading(true);
+      contratoService.findAll()
+        .then(setItems)
+        .catch(err => setError(err?.message || 'Error al cargar contratos'))
+        .finally(() => setLoading(false));
+    }
+  }, [contracts.length]);
 
   // Cálculo de estadísticas dinámicas según contratos recibidos
   const stats: ContractStats = useMemo(() => {
-    const total = contracts.length;
+    const total = items.length;
     const today = new Date();
     const clamp = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    const active = contracts.filter(c => c.status === 'Activo' && clamp(new Date(c.endDate)) >= clamp(today)).length;
+    const active = items.filter(c => (
+      (c.estado?.toUpperCase?.() !== 'FINALIZADO' && c.estado?.toUpperCase?.() !== 'CANCELADO') &&
+      clamp(new Date(c.fechaFin)) >= clamp(today)
+    )).length;
 
     // Por vencer: estado 'Por Vencer' o fin dentro de 30 días
     const now = new Date();
     const in30 = new Date(now);
     in30.setDate(in30.getDate() + 30);
-    const expiring = contracts.filter(c => {
-      if (c.status === 'Por Vencer') return true;
-      const end = new Date(c.endDate);
-      return end >= now && end <= in30 && (c.status === 'Activo' || c.status === 'Pendiente');
+    const expiring = items.filter(c => {
+      const end = new Date(c.fechaFin);
+      const est = (c.estado || '').toUpperCase();
+      return end >= now && end <= in30 && est !== 'FINALIZADO' && est !== 'CANCELADO';
     }).length;
 
     // Ingresos del mes actual (prorrateado por días dentro del mes)
@@ -39,36 +57,45 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
     const clampDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
     const daysBetweenInclusive = (a: Date, b: Date) => Math.max(0, Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24)) + 1);
 
-    const monthlyIncome = contracts.reduce((acc, c) => {
-      const start = clampDate(new Date(c.startDate));
-      const end = clampDate(new Date(c.endDate));
+    const monthlyIncome = items.reduce((acc, c) => {
+      const start = clampDate(new Date(c.fechaInicio));
+      const end = clampDate(new Date(c.fechaFin));
       const startOverlap = start < monthStart ? monthStart : start;
       const endOverlap = end > monthEnd ? monthEnd : end;
       if (endOverlap < monthStart || startOverlap > monthEnd) return acc;
       const days = daysBetweenInclusive(startOverlap, endOverlap);
-      return acc + days * (c.dailyRate || 0);
+      const precioDiario = c.detalles?.[0]?.precioDiario || 0;
+      return acc + days * precioDiario;
     }, 0);
 
     return { total, active, expiring, monthlyIncome };
-  }, [contracts]);
+  }, [items]);
 
   // La lista de contratos proviene de la prop `contracts` (por defecto vacía)
   
 
-  const filteredContracts = contracts.filter(contract =>
-    contract.contractNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contract.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contract.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contract.vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredContracts = items.filter(contract => {
+    const t = searchTerm.toLowerCase();
+    const veh = `${contract.detalles?.[0]?.marcaVehiculo || ''} ${contract.detalles?.[0]?.modeloVehiculo || ''} ${contract.detalles?.[0]?.placaVehiculo || ''}`.toLowerCase();
+    return (
+      contract.codigoContrato?.toLowerCase().includes(t) ||
+      contract.cliente?.nombre?.toLowerCase().includes(t) ||
+      veh.includes(t)
+    );
+  });
 
   const handleNewContract = () => {
     onNavigate?.('crear-contrato');
   };
 
-  const handleViewDetails = (contract: Contract) => setSelectedContract(contract);
-  const handleDelete = (id: string) => onDeleteContract?.(id);
-  const handleEdit = (contract: Contract) => onStartEditContract?.(contract);
+  const handleViewDetails = (contract: ContratoResponseDto) => setSelectedContract(contract);
+  const handleDelete = (id: string) => {
+    if (onDeleteContract) return onDeleteContract(id);
+    contratoService.delete(id)
+      .then(() => setItems(prev => prev.filter(c => c.id !== id)))
+      .catch(err => alert(err?.message || 'No se pudo eliminar el contrato'));
+  };
+  const handleEdit = (contract: ContratoResponseDto) => onStartEditContract?.(contract);
 
   const handleFilters = () => {
     console.log('Abrir filtros');
@@ -175,6 +202,8 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
           </button>
         </div>
 
+        {loading && <div className="no-results"><p>Cargando contratos…</p></div>}
+        {error && <div className="no-results"><p style={{ color: 'crimson' }}>{error}</p></div>}
         <div className="contracts-list">
           {filteredContracts.map((contract) => (
             <ContractCard

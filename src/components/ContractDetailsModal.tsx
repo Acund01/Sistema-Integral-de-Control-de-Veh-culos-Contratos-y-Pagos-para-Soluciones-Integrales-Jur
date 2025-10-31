@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import type { Contract } from '../types/contract';
+import type { ContratoResponseDto } from '../types/contract';
 import '../styles/ClientDetailsModal.css';
 
 interface ContractDetailsModalProps {
-  contract: Contract;
+  contract: ContratoResponseDto;
   onClose: () => void;
-  onEdit?: (contract: Contract) => void;
+  onEdit?: (contract: ContratoResponseDto) => void;
   onDelete?: (id: string) => void;
 }
 
@@ -18,7 +18,7 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
 
   const handleDelete = () => {
     if (onDelete) {
-      if (confirm(`¿Eliminar el contrato ${contract.contractNumber}?`)) {
+      if (confirm(`¿Eliminar el contrato ${contract.codigoContrato}?`)) {
         onDelete(contract.id);
         onClose();
       }
@@ -27,7 +27,7 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
 
   const today = new Date();
   const clamp = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const isEnded = clamp(new Date(contract.endDate)) < clamp(today);
+  const isEnded = clamp(new Date(contract.fechaFin)) < clamp(today);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -36,8 +36,10 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
           <div className="modal-title-area">
             <div className="modal-avatar">📄</div>
             <div>
-              <h2 id="contract-details-title" className="modal-title">{contract.contractNumber}</h2>
-              <div className={`status-badge ${isEnded || contract.status === 'Finalizado' ? 'inactive' : 'active'}`}>{isEnded ? 'Inactivo' : contract.status}</div>
+              <h2 id="contract-details-title" className="modal-title">{contract.codigoContrato}</h2>
+              <div className={`status-badge ${isEnded || (contract.estado || '').toUpperCase() === 'FINALIZADO' ? 'inactive' : 'active'}`}>
+                {isEnded ? 'Inactivo' : contract.estado}
+              </div>
             </div>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
@@ -47,27 +49,27 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
           <div className="details-grid">
             <div className="detail-row">
               <div className="detail-label">Cliente</div>
-              <div className="detail-value">{contract.clientName}</div>
+              <div className="detail-value">{contract.cliente?.nombre}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Vehículo</div>
-              <div className="detail-value">{contract.vehicle} ({contract.vehiclePlate}) - {contract.vehicleType}</div>
+              <div className="detail-value">{`${contract.detalles?.[0]?.marcaVehiculo || ''} ${contract.detalles?.[0]?.modeloVehiculo || ''} (${contract.detalles?.[0]?.placaVehiculo || ''})`}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Período</div>
-              <div className="detail-value">{contract.period} días</div>
+              <div className="detail-value">{contract.diasTotales} días</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Tarifa diaria</div>
-              <div className="detail-value">S/. {contract.dailyRate.toLocaleString()}</div>
+              <div className="detail-value">S/. {(contract.detalles?.[0]?.precioDiario || 0).toLocaleString()}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Fechas</div>
-              <div className="detail-value">{contract.startDate} - {contract.endDate}</div>
+              <div className="detail-value">{contract.fechaInicio} - {contract.fechaFin}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Total</div>
-              <div className="detail-value">S/. {contract.total.toLocaleString()}</div>
+              <div className="detail-value">S/. {Number(contract.montoTotal || 0).toLocaleString()}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">ID</div>
