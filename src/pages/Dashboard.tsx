@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import StatCard from '../components/StatCard';
 import QuickActionCard from '../components/QuickActionCard';
 import ActivityList from '../components/ActivityList';
+import { activityService } from '../services/activityService';
 import AlertCard from '../components/AlertCard';
 import clienteGif from '../assets/cliente.gif';
 import vehiculoGif from '../assets/carro.gif';
@@ -123,28 +124,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     },
   ];
 
-  const activities: Activity[] = [
-    {
-      id: '1',
-      description: 'Nuevo contrato creado para Juan Pérez',
-      time: 'hace 2 horas',
-    },
-    {
-      id: '2',
-      description: 'Vehículo Toyota Corolla agregado',
-      time: 'hace 4 horas',
-    },
-    {
-      id: '3',
-      description: 'Cliente María González registrada',
-      time: 'hace 6 horas',
-    },
-    {
-      id: '4',
-      description: 'Contrato finalizado - Luis Rodríguez',
-      time: 'hace 1 día',
-    },
-  ];
+  const [activities, setActivities] = useState<Activity[]>([]);
+
+  // Actividad reciente en tiempo real (localStorage + suscripción)
+  useEffect(() => {
+    const update = () => setActivities(activityService.getRecent());
+    update();
+    const unsub = activityService.subscribe(update);
+    const t = setInterval(update, 60_000); // refrescar textos relativos
+    return () => { unsub(); clearInterval(t); };
+  }, []);
 
   const alerts: Alert[] = [
     {
@@ -184,6 +173,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     // Si se selecciona 'Ver Reportes' (id '4')
     if (actionId === '4') {
       onNavigate?.('reportes');
+      activityService.log('Navegaste a Reportes');
       return;
     }
 

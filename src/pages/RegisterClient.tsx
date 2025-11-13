@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import '../styles/RegisterClient.css';
 import type { ClienteNaturalDto, ClienteEmpresaDto } from '../types/client';
 import { clienteService } from '../services/clienteService';
+import { activityService } from '../services/activityService';
 
 // Tipo local de compatibilidad con componentes padres (si lo usan)
 type LegacyClientPayload = {
@@ -228,6 +229,13 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
       };
       if (clientId && onUpdateClient) onUpdateClient(clientId, payload);
       if (!clientId && onAddClient) onAddClient(payload);
+
+      // Registrar actividad
+      if (clientType === 'natural') {
+        activityService.log(clientId ? `Actualizaste cliente: ${form.nombres} ${form.apellidos}` : `Registraste cliente: ${form.nombres} ${form.apellidos}`);
+      } else {
+        activityService.log(clientId ? `Actualizaste empresa: ${form.razonSocial}` : `Registraste empresa: ${form.razonSocial}`);
+      }
 
       alert(clientId ? 'Cliente actualizado' : 'Cliente registrado');
       onNavigate?.('clientes');
