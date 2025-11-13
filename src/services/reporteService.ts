@@ -1,5 +1,6 @@
-const ENV_URL = (import.meta as any).env?.VITE_REPORTES_BASE_URL as string | undefined;
-const API_BASE_URL = ENV_URL && ENV_URL.trim() ? ENV_URL.trim() : '/api/reportes';
+// Fuente de la URL base de reportes. Usar variable de entorno VITE_REPORTES_BASE_URL definida en un archivo .env
+// Ejemplo en .env.local: VITE_REPORTES_BASE_URL=http://localhost:8085/api/reportes
+const API_BASE_URL = (import.meta.env.VITE_REPORTES_BASE_URL || '/api/reportes').trim();
 
 export type ReportPayload = Record<string, unknown> | FormData | undefined;
 
