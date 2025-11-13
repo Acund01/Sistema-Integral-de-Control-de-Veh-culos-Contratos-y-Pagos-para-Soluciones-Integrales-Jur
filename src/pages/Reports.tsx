@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import ReportCard from '../components/ReportCard';
+import { generarPagosExcel, generarUsoVehiculosExcel, generarIngresosMensualesExcel } from '../services/reporteService';
 import '../styles/Reports.css';
 import type { ReportStats, MonthlyData, ReportType } from '../types/report';
 
 const Reports: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('ultimo-mes');
+  // genLoading eliminado (no se usa porque generación descarga directo)
 
   const stats: ReportStats = {
     monthlyIncome: 45230,
@@ -25,49 +27,74 @@ const Reports: React.FC = () => {
 
   const reports: ReportType[] = [
     {
-      id: '1',
-      title: 'Reporte de Ingresos',
-      description: 'Análisis detallado de ingresos por período',
-      icon: '💰',
-      lastGenerated: '2024-03-08',
-      period: 'último mes',
+      id: 'pagos',
+      title: 'Reporte de Pagos',
+      description: 'Detalle de pagos realizados por período',
+      icon: '💳',
+      lastGenerated: '-',
+      period: 'seleccionado',
+      tipo: 'PAGOS',
+      formato: 'xlsx'
     },
     {
-      id: '2',
-      title: 'Reporte de Vehículos',
-      description: 'Estado y utilización de la flota',
+      id: 'uso-vehiculos',
+      title: 'Reporte de Uso de Vehículos',
+      description: 'Estado y utilización de la flota en el período',
       icon: '🚗',
-      lastGenerated: '2024-03-07',
-      period: 'último mes',
+      lastGenerated: '-',
+      period: 'seleccionado',
+      tipo: 'USO_VEHICULOS',
+      formato: 'xlsx'
     },
     {
-      id: '3',
-      title: 'Reporte de Clientes',
-      description: 'Análisis de comportamiento de clientes',
-      icon: '👥',
-      lastGenerated: '2024-03-06',
-      period: 'último mes',
-    },
-    {
-      id: '4',
-      title: 'Reporte de Contratos',
-      description: 'Estadísticas de contratos y alquileres',
-      icon: '📄',
-      lastGenerated: '2024-03-05',
-      period: 'último mes',
-    },
+      id: 'ingresos-mensuales',
+      title: 'Reporte de Ingresos Mensuales',
+      description: 'Ingresos agrupados por mes del año actual',
+      icon: '💰',
+      lastGenerated: '-',
+      period: 'año actual',
+      tipo: 'INGRESOS_MENSUALES',
+      formato: 'xlsx'
+    }
   ];
 
-  const handleDownload = (reportId: string) => {
-    console.log('Descargar reporte:', reportId);
+  // Traducir período seleccionado a rango de fechas ISO (simplificado)
+  const periodoFechas = () => {
+    const hoy = new Date();
+    const end = hoy.toISOString().slice(0,10);
+    const d = new Date(hoy);
+    switch(selectedPeriod){
+      case 'ultimos-3-meses': d.setMonth(d.getMonth()-3); break;
+      case 'ultimos-6-meses': d.setMonth(d.getMonth()-6); break;
+      case 'ultimo-ano': d.setFullYear(d.getFullYear()-1); break;
+      default: d.setMonth(d.getMonth()-1); // ultimo-mes
+    }
+    const start = d.toISOString().slice(0,10);
+    return { inicio: start, fin: end };
   };
 
-  const handleGenerate = (reportId: string) => {
-    console.log('Generar reporte:', reportId);
+  const handleDownload = async (reportId: string) => {
+    const rango = periodoFechas();
+    try {
+      if(reportId==='pagos') return generarPagosExcel(rango.inicio, rango.fin);
+      if(reportId==='uso-vehiculos') return generarUsoVehiculosExcel(rango.inicio, rango.fin);
+      if(reportId==='ingresos-mensuales') return generarIngresosMensualesExcel(new Date().getFullYear());
+      alert('Reporte sin endpoint Excel en backend');
+    } catch(e){
+      alert((e as Error).message);
+    }
   };
 
-  const handleGenerateAll = () => {
-    console.log('Generar todos los reportes');
+  const handleGenerate = async (reportId: string) => {
+    // En los endpoints actuales la generación ya produce y descarga el Excel.
+    // Podemos reutilizar handleDownload para 'generar'.
+    await handleDownload(reportId);
+  };
+
+  const handleGenerateAll = async () => {
+    for(const r of reports){
+      await handleDownload(r.id);
+    }
   };
 
   const getMaxValue = (data: MonthlyData[], key: 'income' | 'contracts') => {

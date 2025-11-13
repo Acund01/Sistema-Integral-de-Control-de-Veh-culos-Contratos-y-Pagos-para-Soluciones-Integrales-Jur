@@ -22,4 +22,10 @@ export interface ReportType {
   icon: string;
   lastGenerated: string;
   period: string;
+  /** Endpoint relativo para descarga directa del Excel (ej: /excel/ingresos) */
+  endpoint?: string;
+  /** Identificador lógico del tipo de reporte para generación (ej: INGRESOS) */
+  tipo?: string;
+  /** Formato solicitado (xlsx, csv, pdf) */
+  formato?: string;
 }
