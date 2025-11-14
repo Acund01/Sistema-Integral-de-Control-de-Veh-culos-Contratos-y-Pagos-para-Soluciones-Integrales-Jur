@@ -3,11 +3,11 @@ package com.grupodos.alquilervehiculos.msvcreportes.services;
 import com.grupodos.alquilervehiculos.msvcreportes.dto.ReporteIngresosDto;
 import com.grupodos.alquilervehiculos.msvcreportes.dto.ReportePagosDto;
 import com.grupodos.alquilervehiculos.msvcreportes.dto.ReporteUsoVehiculosDto;
+import com.grupodos.alquilervehiculos.msvcreportes.exceptions.ReporteGenerationException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -17,15 +17,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
+@Slf4j
 public class ExcelGeneratorService {
-    private static final Logger logger = LoggerFactory.getLogger(ExcelGeneratorService.class);
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("MMMM yyyy", java.util.Locale.forLanguageTag("es"));
 
     public byte[] generarReportePagosExcel(List<ReportePagosDto> pagos, String titulo) throws IOException {
-        logger.debug("Generando reporte de pagos en Excel con {} registros", pagos.size());
+        log.debug("Generando reporte de pagos en Excel con {} registros", pagos.size());
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Reporte de Pagos");
@@ -122,17 +122,20 @@ public class ExcelGeneratorService {
             sheet.createFreezePane(0, startDataRow);
 
             workbook.write(baos);
-            logger.debug("Excel de pagos generado exitosamente");
+            log.debug("Excel de pagos generado exitosamente");
             return baos.toByteArray();
 
+        } catch (IOException e) {
+            log.error("Error de E/S generando Excel de pagos: {}", e.getMessage(), e);
+            throw new ReporteGenerationException("Error generando archivo Excel de pagos", e);
         } catch (Exception e) {
-            logger.error("Error generando Excel de pagos: {}", e.getMessage(), e);
-            throw new IOException("Error generando archivo Excel de pagos", e);
+            log.error("Error generando Excel de pagos: {}", e.getMessage(), e);
+            throw new ReporteGenerationException("Error inesperado generando reporte de pagos", e);
         }
     }
 
     public byte[] generarReporteUsoVehiculosExcel(List<ReporteUsoVehiculosDto> usoVehiculos, String titulo) throws IOException {
-        logger.debug("Generando reporte de uso de vehículos en Excel con {} registros", usoVehiculos.size());
+        log.debug("Generando reporte de uso de vehículos en Excel con {} registros", usoVehiculos.size());
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Uso de Vehículos");
@@ -222,17 +225,20 @@ public class ExcelGeneratorService {
             sheet.createFreezePane(0, startDataRow);
 
             workbook.write(baos);
-            logger.debug("Excel de uso de vehículos generado exitosamente");
+            log.debug("Excel de uso de vehículos generado exitosamente");
             return baos.toByteArray();
 
+        } catch (IOException e) {
+            log.error("Error de E/S generando Excel de uso de vehículos: {}", e.getMessage(), e);
+            throw new ReporteGenerationException("Error generando archivo Excel de uso de vehículos", e);
         } catch (Exception e) {
-            logger.error("Error generando Excel de uso de vehículos: {}", e.getMessage(), e);
-            throw new IOException("Error generando archivo Excel de uso de vehículos", e);
+            log.error("Error generando Excel de uso de vehículos: {}", e.getMessage(), e);
+            throw new ReporteGenerationException("Error inesperado generando reporte de uso de vehículos", e);
         }
     }
 
     public byte[] generarReporteIngresosExcel(List<ReporteIngresosDto> ingresos, String titulo) throws IOException {
-        logger.debug("Generando reporte de ingresos en Excel con {} registros", ingresos.size());
+        log.debug("Generando reporte de ingresos en Excel con {} registros", ingresos.size());
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Ingresos Mensuales");
@@ -333,17 +339,19 @@ public class ExcelGeneratorService {
             sheet.createFreezePane(0, startDataRow);
 
             workbook.write(baos);
-            logger.debug("Excel de ingresos generado exitosamente");
+            log.debug("Excel de ingresos generado exitosamente");
             return baos.toByteArray();
 
+        } catch (IOException e) {
+            log.error("Error de E/S generando Excel de ingresos: {}", e.getMessage(), e);
+            throw new ReporteGenerationException("Error generando archivo Excel de ingresos", e);
         } catch (Exception e) {
-            logger.error("Error generando Excel de ingresos: {}", e.getMessage(), e);
-            throw new IOException("Error generando archivo Excel de ingresos", e);
+            log.error("Error generando Excel de ingresos: {}", e.getMessage(), e);
+            throw new ReporteGenerationException("Error inesperado generando reporte de ingresos", e);
         }
     }
 
-    // ========== MÉTODOS AUXILIARES ==========
-
+    // Metodos auxiliares
     private CellStyle crearEstiloHeader(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();

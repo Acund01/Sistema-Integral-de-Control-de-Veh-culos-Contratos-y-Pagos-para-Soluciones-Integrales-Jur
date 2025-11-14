@@ -1,6 +1,7 @@
 package com.grupodos.alquilervehiculos.msvcreportes.services;
 
 import com.grupodos.alquilervehiculos.msvcreportes.entities.Reporte;
+import com.grupodos.alquilervehiculos.msvcreportes.exceptions.ReporteNotFoundException;
 import com.grupodos.alquilervehiculos.msvcreportes.repositories.ReporteRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,13 @@ public class ReporteConsultaService {
 
     public Optional<Reporte> obtenerReportePorId(UUID id) {
         logger.info("Obteniendo reporte con ID: {}", id);
-        return reporteRepository.findById(id);
+        Optional<Reporte> reporte = reporteRepository.findById(id);
+
+        if (reporte.isEmpty()) {
+            throw new ReporteNotFoundException(id);
+        }
+
+        return reporte;
     }
 
     public List<Reporte> obtenerReportesPorTipo(String tipoReporte) {

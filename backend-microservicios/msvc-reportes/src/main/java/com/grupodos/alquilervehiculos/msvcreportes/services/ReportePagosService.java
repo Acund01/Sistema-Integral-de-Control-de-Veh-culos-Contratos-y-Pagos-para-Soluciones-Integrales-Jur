@@ -4,13 +4,18 @@ import com.grupodos.alquilervehiculos.msvcreportes.clients.ClienteFeignClient;
 import com.grupodos.alquilervehiculos.msvcreportes.clients.ContratoFeignClient;
 import com.grupodos.alquilervehiculos.msvcreportes.dto.*;
 import com.grupodos.alquilervehiculos.msvcreportes.entities.Reporte;
+import com.grupodos.alquilervehiculos.msvcreportes.exceptions.FeignClientException;
+import com.grupodos.alquilervehiculos.msvcreportes.exceptions.InvalidDateRangeException;
+import com.grupodos.alquilervehiculos.msvcreportes.exceptions.ReporteGenerationException;
 import com.grupodos.alquilervehiculos.msvcreportes.repositories.ReporteRepository;
+import feign.FeignException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,6 +31,8 @@ public class ReportePagosService {
 
     public List<ReportePagosDto> generarReportePagos(LocalDate fechaInicio, LocalDate fechaFin) {
         log.info("Generando reporte de pagos desde {} hasta {}", fechaInicio, fechaFin);
+
+        validarRangoFechas(fechaInicio, fechaFin);
 
         try {
             RangoFechasRequest request = new RangoFechasRequest(fechaInicio, fechaFin);
@@ -96,15 +103,36 @@ public class ReportePagosService {
                 ));
             }
 
-            //Guardar registro del reporte
+            // Guardar registro del reporte
             guardarRegistroReporte(fechaInicio, fechaFin, reporte.size());
 
             log.info("Reporte generado con {} registros", reporte.size());
             return reporte;
 
+        } catch (FeignException e) {
+            log.error("Error Feign generando reporte de pagos: status={}, message={}", e.status(), e.getMessage());
+            throw new FeignClientException("msvc-contratos", "Error al obtener datos de contratos", e.status());
         } catch (Exception e) {
             log.error("Error generando reporte de pagos: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al generar reporte de pagos: " + e.getMessage(), e);
+            throw new ReporteGenerationException("Error al generar reporte de pagos: " + e.getMessage(), e);
+        }
+    }
+
+    private void validarRangoFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+        if (fechaInicio == null || fechaFin == null) {
+            throw new InvalidDateRangeException("Las fechas de inicio y fin son requeridas");
+        }
+        if (fechaFin.isBefore(fechaInicio)) {
+            throw new InvalidDateRangeException("La fecha de fin debe ser posterior a la fecha de inicio");
+        }
+        if (fechaInicio.isAfter(LocalDate.now())) {
+            throw new InvalidDateRangeException("La fecha de inicio no puede ser en el futuro");
+        }
+
+        // Validar que el rango no sea muy amplio (opcional)
+        long diasDiferencia = ChronoUnit.DAYS.between(fechaInicio, fechaFin);
+        if (diasDiferencia > 365) {
+            throw new InvalidDateRangeException("El rango de fechas no puede ser mayor a 1 año");
         }
     }
 
@@ -146,13 +174,20 @@ public class ReportePagosService {
 
     // Registrar auditoría del reporte
     private void guardarRegistroReporte(LocalDate fechaInicio, LocalDate fechaFin, int cantidadRegistros) {
-        Reporte registro = new Reporte();
-        registro.setTipoReporte("PAGOS");
-        registro.setFormato("EXCEL");
-        registro.setNombreArchivo("reporte-pagos-" + fechaInicio + "-a-" + fechaFin + ".xlsx");
-        registro.setGeneradoPor("SISTEMA");
-        registro.setParametros("FechaInicio: " + fechaInicio + ", FechaFin: " + fechaFin + ", Registros: " + cantidadRegistros);
-        registro.setFechaGeneracion(LocalDateTime.now());
-        reporteRepository.save(registro);
+        try {
+            Reporte registro = new Reporte();
+            registro.setTipoReporte("PAGOS");
+            registro.setFormato("EXCEL");
+            registro.setNombreArchivo("reporte-pagos-" + fechaInicio + "-a-" + fechaFin + ".xlsx");
+            registro.setGeneradoPor("SISTEMA");
+            registro.setParametros("FechaInicio: " + fechaInicio + ", FechaFin: " + fechaFin + ", Registros: " + cantidadRegistros);
+            registro.setFechaGeneracion(LocalDateTime.now());
+            reporteRepository.save(registro);
+
+            log.debug("Registro de reporte guardado exitosamente");
+        } catch (Exception e) {
+            log.error("Error guardando registro del reporte: {}", e.getMessage());
+            // No lanzamos excepción para no afectar la generación del reporte principal
+        }
     }
 }
