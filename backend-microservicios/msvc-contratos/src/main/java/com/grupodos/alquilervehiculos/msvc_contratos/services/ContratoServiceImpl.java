@@ -6,6 +6,10 @@ import com.grupodos.alquilervehiculos.msvc_contratos.dto.*;
 import com.grupodos.alquilervehiculos.msvc_contratos.entities.Contrato;
 import com.grupodos.alquilervehiculos.msvc_contratos.entities.DetalleContrato;
 import com.grupodos.alquilervehiculos.msvc_contratos.enums.EstadoVehiculo;
+import com.grupodos.alquilervehiculos.msvc_contratos.exceptions.ContratoNotFoundException;
+import com.grupodos.alquilervehiculos.msvc_contratos.exceptions.EstadoContratoException;
+import com.grupodos.alquilervehiculos.msvc_contratos.exceptions.FeignClientException;
+import com.grupodos.alquilervehiculos.msvc_contratos.exceptions.ValidacionException;
 import com.grupodos.alquilervehiculos.msvc_contratos.repositories.ContratoRepository;
 import feign.FeignException;
 import lombok.AllArgsConstructor;
@@ -37,7 +41,7 @@ public class ContratoServiceImpl implements ContratoService {
     @Override
     public ContratoResponseDto obtenerPorId(UUID id) {
         Contrato contrato = contratoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contrato no encontrado con ID: " + id));
+                .orElseThrow(() -> new ContratoNotFoundException(id));
         return mapToResponse(contrato);
     }
 
@@ -74,7 +78,7 @@ public class ContratoServiceImpl implements ContratoService {
             VehiculoDto vehiculo = obtenerVehiculoValidado(detalleDto.idVehiculo());
 
             if (!"DISPONIBLE".equals(vehiculo.estado())) {
-                throw new RuntimeException("El vehículo con placa " + vehiculo.placa() + " no está disponible. Estado: " + vehiculo.estado());
+                throw new ValidacionException("El vehículo con placa " + vehiculo.placa() + " no está disponible. Estado: " + vehiculo.estado());
             }
 
             DetalleContrato detalle = new DetalleContrato(
@@ -94,7 +98,7 @@ public class ContratoServiceImpl implements ContratoService {
                 vehiculoClient.actualizarEstado(detalleDto.idVehiculo(),
                         new CambioEstadoVehDto(EstadoVehiculo.ALQUILADO));
             } catch (FeignException e) {
-                throw new RuntimeException("Error al actualizar estado del vehículo: " + e.getMessage());
+                throw new FeignClientException("msvc-vehiculos", "Error al actualizar estado del vehículo", e.status());
             }
         }
 
@@ -109,11 +113,11 @@ public class ContratoServiceImpl implements ContratoService {
     @Override
     public ContratoResponseDto actualizarContrato(UUID id, ContratoRequestDto dto) {
         Contrato contrato = contratoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contrato no encontrado con ID: " + id));
+                .orElseThrow(() -> new ContratoNotFoundException(id));
 
         // Solo permitir actualizar contratos ACTIVOS
         if (!"ACTIVO".equals(contrato.getEstado())) {
-            throw new RuntimeException("Solo se pueden actualizar contratos en estado ACTIVO");
+            throw new EstadoContratoException("Solo se pueden actualizar contratos en estado ACTIVO");
         }
 
         validarFechasContrato(dto.fechaInicio(), dto.fechaFin());
@@ -142,7 +146,7 @@ public class ContratoServiceImpl implements ContratoService {
             VehiculoDto vehiculo = obtenerVehiculoValidado(detalleDto.idVehiculo());
 
             if (!"DISPONIBLE".equals(vehiculo.estado())) {
-                throw new RuntimeException("El vehículo con placa " + vehiculo.placa() + " no está disponible");
+                throw new ValidacionException("El vehículo con placa " + vehiculo.placa() + " no está disponible");
             }
 
             DetalleContrato detalle = new DetalleContrato(
@@ -162,7 +166,7 @@ public class ContratoServiceImpl implements ContratoService {
                 vehiculoClient.actualizarEstado(detalleDto.idVehiculo(),
                         new CambioEstadoVehDto(EstadoVehiculo.ALQUILADO));
             } catch (FeignException e) {
-                throw new RuntimeException("Error al actualizar estado del vehículo: " + e.getMessage());
+                throw new FeignClientException("msvc-vehiculos", "Error al actualizar estado del vehículo", e.status());
             }
         }
 
@@ -176,11 +180,11 @@ public class ContratoServiceImpl implements ContratoService {
     @Override
     public void eliminarContrato(UUID id) {
         Contrato contrato = contratoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contrato no encontrado con ID: " + id));
+                .orElseThrow(() -> new ContratoNotFoundException(id));
 
         // Solo permitir eliminar contratos ACTIVOS
         if (!"ACTIVO".equals(contrato.getEstado())) {
-            throw new RuntimeException("Solo se pueden eliminar contratos en estado ACTIVO");
+            throw new EstadoContratoException("Solo se pueden eliminar contratos en estado ACTIVO");
         }
 
         // Liberar vehículos
@@ -200,10 +204,10 @@ public class ContratoServiceImpl implements ContratoService {
     @Override
     public ContratoResponseDto finalizarContrato(UUID id) {
         Contrato contrato = contratoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contrato no encontrado con ID: " + id));
+                .orElseThrow(() -> new ContratoNotFoundException(id));
 
         if (!"ACTIVO".equals(contrato.getEstado())) {
-            throw new RuntimeException("Solo se pueden finalizar contratos en estado ACTIVO");
+            throw new EstadoContratoException("Solo se pueden finalizar contratos en estado ACTIVO");
         }
 
         // Liberar vehículos
@@ -226,10 +230,10 @@ public class ContratoServiceImpl implements ContratoService {
     @Override
     public ContratoResponseDto cancelarContrato(UUID id) {
         Contrato contrato = contratoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contrato no encontrado con ID: " + id));
+                .orElseThrow(() -> new ContratoNotFoundException(id));
 
         if (!"ACTIVO".equals(contrato.getEstado())) {
-            throw new RuntimeException("Solo se pueden cancelar contratos en estado ACTIVO");
+            throw new EstadoContratoException("Solo se pueden cancelar contratos en estado ACTIVO");
         }
 
         // Liberar vehículos
@@ -288,9 +292,9 @@ public class ContratoServiceImpl implements ContratoService {
         try {
             return clienteClient.obtenerClientePorId(idCliente);
         } catch (FeignException.NotFound e) {
-            throw new RuntimeException("Cliente no encontrado con ID: " + idCliente);
+            throw new ValidacionException("Cliente no encontrado con ID: " + idCliente);
         } catch (FeignException e) {
-            throw new RuntimeException("Error al obtener información del cliente: " + e.getMessage());
+            throw new FeignClientException("msvc-clientes", "Error al obtener información del cliente: " + e.getMessage(), e.status());
         }
     }
 
@@ -298,22 +302,22 @@ public class ContratoServiceImpl implements ContratoService {
         try {
             return vehiculoClient.obtenerVehiculoPorId(idVehiculo);
         } catch (FeignException.NotFound e) {
-            throw new RuntimeException("Vehículo no encontrado con ID: " + idVehiculo);
+            throw new ValidacionException("Vehículo no encontrado con ID: " + idVehiculo);
         } catch (FeignException e) {
-            throw new RuntimeException("Error al obtener información del vehículo: " + e.getMessage());
+            throw new FeignClientException("msvc-vehiculos", "Error al obtener información del vehículo: " + e.getMessage(), e.status());
         }
     }
 
     private void validarFechasContrato(LocalDate fechaInicio, LocalDate fechaFin) {
         if (fechaInicio == null || fechaFin == null) {
-            throw new RuntimeException("Las fechas de inicio y fin son requeridas");
+            throw new ValidacionException("Las fechas de inicio y fin son requeridas");
         }
 
         if (fechaInicio.isBefore(LocalDate.now())) {
-            throw new RuntimeException("La fecha de inicio no puede ser en el pasado");
+            throw new ValidacionException("La fecha de inicio debe ser actual o posterior");
         }
         if (fechaFin.isBefore(fechaInicio)) {
-            throw new RuntimeException("La fecha de fin debe ser posterior a la fecha de inicio");
+            throw new ValidacionException("La fecha de fin debe ser posterior a la fecha de inicio");
         }
     }
 

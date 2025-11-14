@@ -4,6 +4,10 @@ import com.grupodos.alquilervehiculos.msvc_contratos.dto.ComprobanteRequestDto;
 import com.grupodos.alquilervehiculos.msvc_contratos.dto.ComprobanteResponseDto;
 import com.grupodos.alquilervehiculos.msvc_contratos.entities.Comprobante;
 import com.grupodos.alquilervehiculos.msvc_contratos.entities.Contrato;
+import com.grupodos.alquilervehiculos.msvc_contratos.exceptions.ComprobanteNotFoundException;
+import com.grupodos.alquilervehiculos.msvc_contratos.exceptions.ContratoNotFoundException;
+import com.grupodos.alquilervehiculos.msvc_contratos.exceptions.EstadoContratoException;
+import com.grupodos.alquilervehiculos.msvc_contratos.exceptions.ValidacionException;
 import com.grupodos.alquilervehiculos.msvc_contratos.repositories.ComprobanteRepository;
 import com.grupodos.alquilervehiculos.msvc_contratos.repositories.ContratoRepository;
 import org.springframework.stereotype.Service;
@@ -35,15 +39,15 @@ public class ComprobanteService {
     public ComprobanteResponseDto generarComprobante(ComprobanteRequestDto dto) {
         // Validar contrato
         Contrato contrato = contratoRepository.findById(dto.idContrato())
-                .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
+                .orElseThrow(() -> new ContratoNotFoundException(dto.idContrato()));
 
         if (!"FINALIZADO".equals(contrato.getEstado())) {
-            throw new RuntimeException("Solo se pueden generar comprobantes para contratos finalizados");
+            throw new EstadoContratoException("Solo se pueden generar comprobantes para contratos finalizados");
         }
 
         // Validar que no exista comprobante
         if (comprobanteRepository.findByContratoId(dto.idContrato()).isPresent()) {
-            throw new RuntimeException("Ya existe un comprobante para este contrato");
+            throw new ValidacionException("Ya existe un comprobante para este contrato");
         }
 
         // Generar numeración AUTOMÁTICA
@@ -86,20 +90,20 @@ public class ComprobanteService {
     // Los demás métodos se mantienen igual...
     public ComprobanteResponseDto obtenerPorContrato(UUID contratoId) {
         Comprobante comprobante = comprobanteRepository.findByContratoId(contratoId)
-                .orElseThrow(() -> new RuntimeException("Comprobante no encontrado"));
+                .orElseThrow(() -> new ComprobanteNotFoundException("Comprobante no encontrado"));
         return mapToResponse(comprobante);
     }
 
     public byte[] descargarPdf(UUID comprobanteId) {
         Comprobante comprobante = comprobanteRepository.findById(comprobanteId)
-                .orElseThrow(() -> new RuntimeException("Comprobante no encontrado"));
+                .orElseThrow(() -> new ComprobanteNotFoundException("Comprobante no encontrado"));
         return pdfGeneratorService.generarComprobantePdf(comprobante);
     }
 
     @Transactional
     public void anularComprobante(UUID comprobanteId) {
         Comprobante comprobante = comprobanteRepository.findById(comprobanteId)
-                .orElseThrow(() -> new RuntimeException("Comprobante no encontrado"));
+                .orElseThrow(() -> new ComprobanteNotFoundException("Comprobante no encontrado"));
         comprobante.setEstado("ANULADO");
         comprobanteRepository.save(comprobante);
     }

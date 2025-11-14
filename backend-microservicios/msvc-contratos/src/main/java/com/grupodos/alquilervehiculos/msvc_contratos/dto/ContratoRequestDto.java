@@ -1,5 +1,6 @@
 package com.grupodos.alquilervehiculos.msvc_contratos.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
@@ -19,5 +20,6 @@ public record ContratoRequestDto(
         String observaciones,
 
         @NotNull(message = "Los detalles del contrato son requeridos")
+        @Valid
         List<DetalleContratoDto> detalles
 ) {}
