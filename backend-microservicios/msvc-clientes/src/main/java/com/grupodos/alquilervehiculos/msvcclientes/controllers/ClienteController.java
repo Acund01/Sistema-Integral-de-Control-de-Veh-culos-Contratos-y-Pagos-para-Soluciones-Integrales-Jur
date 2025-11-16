@@ -86,6 +86,13 @@ public class ClienteController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> restore(@PathVariable UUID id) {
+        log.info("RESTORE /api/clientes/{} - Restaurar cliente", id);
+        clienteService.restore(id);
+        return ResponseEntity.noContent().build();
+    }
+
     //Feign client contratos
     @GetMapping("/contratos/{id}")
     public ResponseEntity<ClienteContratoDto> obtenerParaContrato(@PathVariable UUID id) {

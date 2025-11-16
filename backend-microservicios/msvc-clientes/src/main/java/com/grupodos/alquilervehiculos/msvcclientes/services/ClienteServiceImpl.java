@@ -216,6 +216,14 @@ public class ClienteServiceImpl implements ClienteService {
         clienteRepository.save(c);
     }
 
+    @Override
+    @Transactional
+    public void restore(UUID id) {
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado con id: " + id));
+        cliente.setActivo(true);
+    }
+
     // Feign client service
     @Transactional(readOnly = true)
     public ClienteContratoDto obtenerClienteParaContrato(UUID id) {

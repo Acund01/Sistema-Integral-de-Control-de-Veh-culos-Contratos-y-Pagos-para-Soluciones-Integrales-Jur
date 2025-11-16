@@ -22,6 +22,7 @@ public interface ClienteService {
     ClienteNatural updateNatural(UUID id, ClienteNaturalDto dto);
     ClienteEmpresa updateEmpresa(UUID id, ClienteEmpresaDto dto);
     void delete(UUID id);
+    void restore(UUID id);
 
     ClienteContratoDto obtenerClienteParaContrato(UUID id);
     ClienteReporteDto obtenerClienteParaReporte(UUID id);
