@@ -7,6 +7,7 @@ import com.grupodos.alquilervehiculos.msvcclientes.dto.ClienteReporteDto;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.Cliente;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.ClienteEmpresa;
 import com.grupodos.alquilervehiculos.msvcclientes.entities.ClienteNatural;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public interface ClienteService {
     ClienteEmpresa updateEmpresa(UUID id, ClienteEmpresaDto dto);
     void delete(UUID id);
     void restore(UUID id);
+    void borrar(UUID id);
 
     ClienteContratoDto obtenerClienteParaContrato(UUID id);
     ClienteReporteDto obtenerClienteParaReporte(UUID id);

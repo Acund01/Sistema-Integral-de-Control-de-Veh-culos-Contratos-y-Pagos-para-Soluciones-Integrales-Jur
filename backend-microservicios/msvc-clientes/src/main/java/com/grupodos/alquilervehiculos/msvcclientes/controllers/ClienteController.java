@@ -93,6 +93,13 @@ public class ClienteController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("permanente/{id}")
+    public ResponseEntity<Void> borrar(@PathVariable UUID id) {
+        log.info("DELETE /api/clientes/{} - Borrar cliente", id);
+        clienteService.borrar(id);
+        return ResponseEntity.noContent().build();
+    }
+
     //Feign client contratos
     @GetMapping("/contratos/{id}")
     public ResponseEntity<ClienteContratoDto> obtenerParaContrato(@PathVariable UUID id) {

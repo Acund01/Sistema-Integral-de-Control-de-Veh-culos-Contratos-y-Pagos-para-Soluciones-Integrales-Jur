@@ -27,20 +27,19 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class VehiculoService {
 
     private final VehiculoRepository vehiculoRepository;
     private final ModeloRepository modeloRepository;
     private final TipoVehiculoRepository tipoVehiculoRepository;
 
+    @Transactional(readOnly = true)
     public List<Vehiculo> listarTodos() {
         log.debug("Listando todos los vehículos activos");
-        return vehiculoRepository.findAll().stream()
-                .filter(Vehiculo::isActivo)
-                .toList();
+        return vehiculoRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Vehiculo> listarPorMarca(Long marcaId) {
         log.debug("Listando vehículos por marca ID: {}", marcaId);
         return vehiculoRepository.findByModeloMarcaId(marcaId).stream()
@@ -48,6 +47,7 @@ public class VehiculoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<Vehiculo> listarPorTipo(Long tipoId) {
         log.debug("Listando vehículos por tipo ID: {}", tipoId);
         return vehiculoRepository.findByTipoVehiculoId(tipoId).stream()
@@ -55,25 +55,29 @@ public class VehiculoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<Vehiculo> listarPorEstado(EstadoVehiculo estado) {
         log.debug("Listando vehículos por estado: {}", estado);
         return vehiculoRepository.findByEstadoAndActivoTrue(estado);
     }
 
+    @Transactional(readOnly = true)
     public List<Vehiculo> listarDisponibles() {
         log.debug("Listando vehículos disponibles");
         return vehiculoRepository.findByEstadoAndActivoTrue(EstadoVehiculo.DISPONIBLE);
     }
 
+    @Transactional(readOnly = true)
     public Vehiculo obtenerPorId(UUID id) {
         log.debug("Obteniendo vehículo con ID: {}", id);
-        return vehiculoRepository.findByIdAndActivoTrue(id)
+        return vehiculoRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Vehículo no encontrado con ID: {}", id);
                     return new VehiculoNotFoundException(id);
                 });
     }
 
+    @Transactional
     public Vehiculo crearVehiculo(VehiculoRequestDto dto) {
         log.info("Creando vehículo con placa: {}", dto.placa());
 
@@ -116,6 +120,7 @@ public class VehiculoService {
         return guardado;
     }
 
+    @Transactional
     public Vehiculo actualizarVehiculo(UUID id, VehiculoRequestDto dto) {
         log.info("Actualizando vehículo con ID: {}", id);
         Vehiculo existente = obtenerPorId(id);
@@ -143,14 +148,43 @@ public class VehiculoService {
         return actualizado;
     }
 
+    @Transactional
     public void eliminarVehiculo(UUID id) {
         log.info("Eliminando lógicamente vehículo con ID: {}", id);
-        Vehiculo existente = obtenerPorId(id);
+        Vehiculo existente = vehiculoRepository.findById(id)
+                .orElseThrow(() -> new VehiculoNotFoundException(id));
         existente.setActivo(false);
         vehiculoRepository.save(existente);
         log.debug("Vehículo marcado como inactivo: {}", id);
     }
 
+    @Transactional
+    public void restaurarVehiculo(UUID id) {
+        log.info("Restaurando vehículo con ID: {}", id);
+
+        Vehiculo vehiculo = vehiculoRepository.findById(id)
+                .orElseThrow(() -> new VehiculoNotFoundException(id));
+
+        if (vehiculo.isActivo()) {
+            log.warn("El vehículo {} ya estaba activo", id);
+            return;
+        }
+
+        vehiculo.setActivo(true);
+        vehiculoRepository.save(vehiculo);
+
+        log.info("Vehículo restaurado correctamente: {}", id);
+    }
+
+    @Transactional
+    public void eliminar(UUID id) {
+        Vehiculo vehiculo = vehiculoRepository.findById(id)
+                .orElseThrow(() -> new VehiculoNotFoundException(id));
+
+        vehiculoRepository.deleteById(id);
+    }
+
+    @Transactional
     public Vehiculo actualizarEstado(UUID id, EstadoVehiculo estado) {
         log.info("Actualizando estado del vehículo {} a: {}", id, estado);
         Vehiculo vehiculo = obtenerPorId(id);
@@ -176,11 +210,13 @@ public class VehiculoService {
         }
     }
 
+    @Transactional
     public boolean verificarDisponibilidad(UUID id) {
         Vehiculo vehiculo = obtenerPorId(id);
         return vehiculo.getEstado() == EstadoVehiculo.DISPONIBLE;
     }
 
+    @Transactional
     public List<VehiculoResponseDto> listarTodosParaReportes() {
         log.debug("Obteniendo todos los vehículos para reportes");
         List<Vehiculo> vehiculos = vehiculoRepository.findAll();
