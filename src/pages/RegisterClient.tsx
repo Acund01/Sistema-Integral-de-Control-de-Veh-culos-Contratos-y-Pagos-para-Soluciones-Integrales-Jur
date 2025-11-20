@@ -25,7 +25,6 @@ interface RegisterClientProps {
     apellidos: string;
     tipoDocumento: string;
     numeroDocumento: string;
-    fechaNacimiento: string;
     correo: string;
     telefono: string;
     direccion: string;
@@ -60,7 +59,6 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
     apellidos?: string;
     tipoDocumento?: string;
     numeroDocumento?: string;
-    fechaNacimiento?: string;
     correo?: string;
     telefono?: string;
     direccion?: string;
@@ -87,7 +85,6 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
     apellidos: initialData?.apellidos ?? '',
     tipoDocumento: initialData?.tipoDocumento ?? '',
     numeroDocumento: initialData?.numeroDocumento ?? '',
-    fechaNacimiento: initialData?.fechaNacimiento ?? '',
     correo: initialData?.correo ?? '',
     telefono: initialData?.telefono ?? '',
     direccion: initialData?.direccion ?? '',
@@ -187,6 +184,9 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
           correo: form.correo ?? '',
           telefono: form.telefono ?? '',
           direccion: form.direccion ?? '',
+          contactoEmergenciaNombre: form.contactoEmergenciaNombre || undefined,
+          contactoEmergenciaTelefono: form.contactoEmergenciaTelefono || undefined,
+          notas: form.notas || undefined,
         };
         if (clientId) {
           await clienteService.updateNatural(clientId, dto);
@@ -211,6 +211,9 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
             correo: form.representanteCorreo ?? '',
             telefono: form.representanteTelefono ?? '',
           },
+          contactoEmergenciaNombre: form.contactoEmergenciaNombre || undefined,
+          contactoEmergenciaTelefono: form.contactoEmergenciaTelefono || undefined,
+          notas: form.notas || undefined,
         };
         if (clientId) {
           await clienteService.updateEmpresa(clientId, dto);
@@ -314,10 +317,6 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
                     pattern="[0-9]*"
                     required
                   />
-                </div>
-                <div className="field-col">
-                  <label>Fecha de Nacimiento</label>
-                  <input name="fechaNacimiento" value={form.fechaNacimiento} onChange={handleChange} type="date" />
                 </div>
               </div>
             </section>

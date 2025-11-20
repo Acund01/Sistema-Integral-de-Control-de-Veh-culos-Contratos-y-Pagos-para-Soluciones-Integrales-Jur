@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { ClienteUnion } from '../types/client';
 import '../styles/ClientDetailsModal.css';
+import { clienteService } from '../services/clienteService';
 
 interface ClientDetailsModalProps {
   client: ClienteUnion;
@@ -11,6 +12,9 @@ interface ClientDetailsModalProps {
 }
 
 const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose, onEdit, onDelete, onChangeStatus }) => {
+  // Estado local para permitir recarga completa de información (incl. campos opcionales)
+  const [fullClient, setFullClient] = useState<ClienteUnion>(client);
+  const [loadingExtra, setLoadingExtra] = useState(false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -19,22 +23,39 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const fetchFull = async () => {
+      try {
+        setLoadingExtra(true);
+        const fresh = await clienteService.findById(client.id);
+        if (!cancelled) setFullClient(fresh);
+      } catch {
+        // si falla, mantenemos datos existentes
+      } finally {
+        if (!cancelled) setLoadingExtra(false);
+      }
+    };
+    fetchFull();
+    return () => { cancelled = true; };
+  }, [client.id]);
+
   const displayName = useMemo(() => (
-    client.tipoCliente === 'NATURAL'
-      ? `${client.nombre} ${client.apellido}`
-      : client.razonSocial
-  ), [client]);
+    fullClient.tipoCliente === 'NATURAL'
+      ? `${fullClient.nombre} ${fullClient.apellido}`
+      : fullClient.razonSocial
+  ), [fullClient]);
 
   const handleDelete = () => {
     if (onDelete) {
       if (confirm(`¿Eliminar al cliente "${displayName}"?`)) {
-        onDelete(client.id);
+        onDelete(fullClient.id);
         onClose();
       }
     }
   };
 
-  const created = client.creadoEn ? new Date(client.creadoEn) : null;
+  const created = fullClient.creadoEn ? new Date(fullClient.creadoEn) : null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -44,7 +65,7 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
             <div className="modal-avatar">👤</div>
             <div>
               <h2 id="client-details-title" className="modal-title">{displayName}</h2>
-              <div className={`status-badge ${client.activo ? 'activo' : 'inactivo'}`}>{client.activo ? 'Activo' : 'Inactivo'}</div>
+                <div className={`status-badge ${fullClient.activo ? 'activo' : 'inactivo'}`}>{fullClient.activo ? 'Activo' : 'Inactivo'}{loadingExtra && ' · …'}</div>
             </div>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
@@ -54,50 +75,68 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
           <div className="details-grid">
             <div className="detail-row">
               <div className="detail-label">Correo</div>
-              <div className="detail-value">{client.correo || '—'}</div>
+              <div className="detail-value">{fullClient.correo || '—'}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Teléfono</div>
-              <div className="detail-value">{client.telefono || '—'}</div>
+              <div className="detail-value">{fullClient.telefono || '—'}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Dirección</div>
-              <div className="detail-value">{client.direccion || '—'}</div>
+              <div className="detail-value">{fullClient.direccion || '—'}</div>
             </div>
+            {(fullClient as any).contactoEmergenciaNombre && (
+              <div className="detail-row">
+                <div className="detail-label">Contacto Emergencia</div>
+                <div className="detail-value">{(fullClient as any).contactoEmergenciaNombre}</div>
+              </div>
+            )}
+            {(fullClient as any).contactoEmergenciaTelefono && (
+              <div className="detail-row">
+                <div className="detail-label">Teléfono Emergencia</div>
+                <div className="detail-value">{(fullClient as any).contactoEmergenciaTelefono}</div>
+              </div>
+            )}
+            {(fullClient as any).notas && (
+              <div className="detail-row">
+                <div className="detail-label">Notas</div>
+                <div className="detail-value">{(fullClient as any).notas}</div>
+              </div>
+            )}
             <div className="detail-row">
               <div className="detail-label">ID</div>
-              <div className="detail-value monospace">{client.id}</div>
+              <div className="detail-value monospace">{fullClient.id}</div>
             </div>
             <div className="detail-row">
               <div className="detail-label">Creado</div>
               <div className="detail-value">{created ? created.toLocaleString() : '—'}</div>
             </div>
-            {client.tipoCliente === 'NATURAL' ? (
+            {fullClient.tipoCliente === 'NATURAL' ? (
               <>
                 <div className="detail-row">
                   <div className="detail-label">Documento</div>
-                  <div className="detail-value">{client.tipoDocumento}: {client.numeroDocumento}</div>
+                  <div className="detail-value">{(fullClient as any).tipoDocumento}: {(fullClient as any).numeroDocumento}</div>
                 </div>
               </>
             ) : (
               <>
                 <div className="detail-row">
                   <div className="detail-label">RUC</div>
-                  <div className="detail-value">{client.ruc}</div>
+                  <div className="detail-value">{(fullClient as any).ruc}</div>
                 </div>
                 <div className="detail-row">
                   <div className="detail-label">Razón Social</div>
-                  <div className="detail-value">{client.razonSocial}</div>
+                  <div className="detail-value">{(fullClient as any).razonSocial}</div>
                 </div>
-                {client.representante && (
+                { (fullClient as any).representante && (
                   <>
                     <div className="detail-row">
                       <div className="detail-label">Representante</div>
-                      <div className="detail-value">{client.representante.nombre} {client.representante.apellido}</div>
+                      <div className="detail-value">{(fullClient as any).representante.nombre} {(fullClient as any).representante.apellido}</div>
                     </div>
                     <div className="detail-row">
                       <div className="detail-label">Doc. Representante</div>
-                      <div className="detail-value">{client.representante.tipoDocumento}: {client.representante.numeroDocumento}</div>
+                      <div className="detail-value">{(fullClient as any).representante.tipoDocumento}: {(fullClient as any).representante.numeroDocumento}</div>
                     </div>
                   </>
                 )}
@@ -141,7 +180,7 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>Cerrar</button>
           {onEdit && (
-            <button className="btn-primary" onClick={() => onEdit(client)}>Editar</button>
+            <button className="btn-primary" onClick={() => onEdit(fullClient)}>Editar</button>
           )}
           {onDelete && (
             <button className="btn-danger" onClick={handleDelete}>Eliminar</button>

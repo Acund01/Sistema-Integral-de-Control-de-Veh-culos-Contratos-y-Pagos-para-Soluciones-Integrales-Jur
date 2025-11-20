@@ -146,6 +146,31 @@ class ClienteService {
   }
 
   /**
+   * PATCH /api/clientes/{id}/restaurar - Restaurar / reactivar cliente inactivo
+   * Si tu backend usa otra ruta (p.ej. /activar), ajusta aquí.
+   */
+  async restore(id: string): Promise<void> {
+    // Endpoint real según ClienteController: PUT /api/clientes/{id} (sin body, 204)
+    const response = await fetch(`${API_BASE_URL}/${id}`, { method: 'PUT' });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Error al restaurar cliente ${id}: ${response.status} ${response.statusText} - ${text}`);
+    }
+  }
+
+  /**
+   * Cambiar estado (activar/desactivar) usando estrategia unificada.
+   * Intentará desactivar con DELETE y activar con restore.
+   */
+  async setActivo(id: string, activo: boolean): Promise<void> {
+    if (activo) {
+      return this.restore(id);
+    } else {
+      return this.delete(id);
+    }
+  }
+
+  /**
    * GET /api/clientes/contratos/{id} - Obtener cliente para contrato (Feign client)
    */
   async obtenerParaContrato(id: string): Promise<ClienteContratoDto> {

@@ -31,6 +31,9 @@ export interface ClienteNatural extends Cliente {
   numeroDocumento: string;
   nombre: string;
   apellido: string;
+  contactoEmergenciaNombre?: string;
+  contactoEmergenciaTelefono?: string;
+  notas?: string;
 }
 
 // Cliente Empresa (coincide con ClienteEmpresa.java)
@@ -41,6 +44,9 @@ export interface ClienteEmpresa extends Cliente {
   giroComercial?: string;
   direccionFiscal?: string;
   representante?: Representante;
+  contactoEmergenciaNombre?: string;
+  contactoEmergenciaTelefono?: string;
+  notas?: string;
 }
 
 // Union type para trabajar con ambos tipos de clientes
@@ -55,6 +61,9 @@ export interface ClienteNaturalDto {
   correo: string;
   telefono: string;
   direccion?: string;
+  contactoEmergenciaNombre?: string;
+  contactoEmergenciaTelefono?: string;
+  notas?: string;
 }
 
 export interface RepresentanteDto {
@@ -76,6 +85,9 @@ export interface ClienteEmpresaDto {
   correo: string;
   telefono: string;
   direccion?: string;
+  contactoEmergenciaNombre?: string;
+  contactoEmergenciaTelefono?: string;
+  notas?: string;
 }
 
 // DTO para obtener cliente para contrato

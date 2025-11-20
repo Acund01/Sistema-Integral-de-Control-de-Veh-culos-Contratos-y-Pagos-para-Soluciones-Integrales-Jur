@@ -101,12 +101,8 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate }) => {
 
   const handleChangeStatus = async (id: string, activo: boolean) => {
     try {
-      // El backend hace soft delete, así que para cambiar el estado
-      // necesitamos implementar un endpoint específico o usar delete para desactivar
-      if (!activo) {
-        await clienteService.delete(id);
-      }
-      // Recargar la lista
+      await clienteService.setActivo(id, activo);
+      alert(`Cliente ${activo ? 'activado' : 'desactivado'} correctamente`);
       await loadClients();
       setSelectedClient(null);
     } catch (err) {

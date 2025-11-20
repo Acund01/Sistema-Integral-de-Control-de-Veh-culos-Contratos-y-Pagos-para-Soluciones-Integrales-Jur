@@ -85,12 +85,13 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
   }, [startDate, endDate]);
 
   const numDaily = typeof dailyRate === 'number' ? dailyRate : 0;
-  // Ajuste: utilizar el valor ingresado en depósito como costo de seguro único
-  const insuranceTotal = typeof deposit === 'number' ? deposit : 0;
+  const insuranceDaily = INSURANCE_DAILY_RATE[insurance] || 0;
+  const insuranceTotal = insuranceDaily * days; // costo del seguro según días
+  const depositAmount = typeof deposit === 'number' ? deposit : 0; // depósito separado, no se grava
 
   const subtotal = days * numDaily;
-  const taxes = (subtotal + insuranceTotal) * 0.18;
-  const total = subtotal + insuranceTotal + taxes;
+  const taxes = (subtotal + insuranceTotal) * 0.18; // impuestos sobre tarifa + seguro
+  const total = subtotal + insuranceTotal + taxes + depositAmount; // depósito se suma pero no se grava
 
   const displayClientName = (c: ClienteUnion) => c.tipoCliente === 'NATURAL'
     ? `${c.nombre} ${c.apellido}`
@@ -292,8 +293,12 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
               <span>S/. {subtotal.toLocaleString()}</span>
             </div>
             <div className="summary-row">
-              <span>Seguro:</span>
+              <span>Seguro ({insuranceDaily ? `S/. ${insuranceDaily}/día` : '—'}):</span>
               <span>S/. {insuranceTotal.toLocaleString()}</span>
+            </div>
+            <div className="summary-row">
+              <span>Depósito:</span>
+              <span>S/. {depositAmount.toLocaleString()}</span>
             </div>
             <div className="summary-row">
               <span>Impuestos (18%):</span>
