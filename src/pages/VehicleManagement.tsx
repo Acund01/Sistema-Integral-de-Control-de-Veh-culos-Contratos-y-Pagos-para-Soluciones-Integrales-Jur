@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import VehicleCard from '../components/VehicleCard';
 import VehicleDetailsModal from '../components/VehicleDetailsModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../styles/VehicleManagement.css';
 import type { Vehiculo, VehicleStats, EstadoVehiculo, TipoCombustible, CrearVehiculoDto, ActualizarVehiculoDto, Modelo, TipoVehiculo as TipoVehiculoEntity } from '../types/vehicle';
 import { vehiculoService } from '../services/vehiculoService';
@@ -25,6 +26,18 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
   const [tiposVehiculo, setTiposVehiculo] = useState<TipoVehiculoEntity[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState<boolean>(false);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   interface NewVehicleForm {
     placa: string;
@@ -170,36 +183,79 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
   };
 
   const handleDeleteVehicle = (vehicleId: string) => {
-    if (!confirm('¿Eliminar definitivamente este vehículo? Esta acción no se puede deshacer.')) return;
-    if (onDeleteVehicle) {
-      onDeleteVehicle(vehicleId);
-    } else {
-      vehiculoService.purge(vehicleId)
-        .then(async () => {
-          alert('Vehículo eliminado definitivamente');
-          // Recargar lista
-          try {
-            const data = await vehiculoService.findAll();
-            setItems(data);
-          } catch (e) {
-            // fallback: eliminar localmente
-            setItems(prev => prev.filter(v => v.id !== vehicleId));
-          }
-        })
-        .catch(err => alert(err?.message || 'No se pudo eliminar el vehículo'))
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar vehículo',
+      message: '¿Eliminar definitivamente este vehículo? Esta acción no se puede deshacer.',
+      type: 'danger',
+      onConfirm: () => {
+        if (onDeleteVehicle) {
+          onDeleteVehicle(vehicleId);
+        } else {
+          vehiculoService.purge(vehicleId)
+            .then(async () => {
+              setConfirmDialog({
+                isOpen: true,
+                title: 'Éxito',
+                message: 'Vehículo eliminado definitivamente',
+                type: 'success',
+                onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+              });
+              // Recargar lista
+              try {
+                const data = await vehiculoService.findAll();
+                setItems(data);
+              } catch (e) {
+                // fallback: eliminar localmente
+                setItems(prev => prev.filter(v => v.id !== vehicleId));
+              }
+            })
+            .catch(err => {
+              setConfirmDialog({
+                isOpen: true,
+                title: 'Error',
+                message: err?.message || 'No se pudo eliminar el vehículo',
+                type: 'danger',
+                onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+              });
+            });
+        }
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   const handleChangeActivo = async (id: string, activo: boolean) => {
-    try {
-      await vehiculoService.setActivo(id, activo);
-      alert(`Vehículo ${activo ? 'activado' : 'desactivado'} correctamente`);
-      const data = await vehiculoService.findAll();
-      setItems(data);
-      setSelectedVehicle(null);
-    } catch (e) {
-      alert(`Error al cambiar estado de activación: ${e instanceof Error ? e.message : 'Error desconocido'}`);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: `${activo ? 'Activar' : 'Inactivar'} vehículo`,
+      message: `¿Está seguro de ${activo ? 'activar' : 'inactivar'} este vehículo?`,
+      type: 'warning',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          await vehiculoService.setActivo(id, activo);
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Éxito',
+            message: `Vehículo ${activo ? 'activado' : 'desactivado'} correctamente`,
+            type: 'success',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+          const data = await vehiculoService.findAll();
+          setItems(data);
+          setSelectedVehicle(null);
+        } catch (e) {
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Error',
+            message: `Error al cambiar estado de activación: ${e instanceof Error ? e.message : 'Error desconocido'}`,
+            type: 'danger',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+        }
+      },
+    });
   };
 
   const handleStartEditVehicle = (vehicle: Vehiculo) => {
@@ -447,6 +503,15 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
           )}
         </>
       )}
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

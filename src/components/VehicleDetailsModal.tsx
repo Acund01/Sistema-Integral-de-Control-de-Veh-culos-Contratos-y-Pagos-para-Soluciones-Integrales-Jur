@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Vehiculo, EstadoVehiculo, TipoCombustible } from '../types/vehicle';
+import { ConfirmDialog } from './ConfirmDialog';
 import '../styles/ClientDetailsModal.css';
 
 interface VehicleDetailsModalProps {
@@ -12,6 +13,19 @@ interface VehicleDetailsModalProps {
 }
 
 const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onClose, onEdit, onDelete, onChangeStatus, onChangeActivo }) => {
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -20,10 +34,17 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
 
   const handleDelete = () => {
     if (onDelete) {
-      if (confirm(`¿Eliminar definitivamente el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}? Esta acción no se puede deshacer.`)) {
-        onDelete(vehicle.id);
-        onClose();
-      }
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Eliminar vehículo',
+        message: `¿Eliminar definitivamente el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}? Esta acción no se puede deshacer.`,
+        type: 'danger',
+        onConfirm: () => {
+          onDelete(vehicle.id);
+          onClose();
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        },
+      });
     }
   };
 
@@ -31,10 +52,17 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
     if (!onChangeActivo) return;
     const newStatus = !vehicle.activo;
     const action = newStatus ? 'activar' : 'inactivar';
-    if (confirm(`¿Está seguro de ${action} este vehículo?`)) {
-      onChangeActivo(vehicle.id, newStatus);
-      onClose();
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: `${newStatus ? 'Activar' : 'Inactivar'} vehículo`,
+      message: `¿Está seguro de ${action} este vehículo?`,
+      type: 'warning',
+      onConfirm: () => {
+        onChangeActivo(vehicle.id, newStatus);
+        onClose();
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   const prettyFuel = (f: TipoCombustible) => {
@@ -145,6 +173,15 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
           )}
         </div>
       </div>
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };
