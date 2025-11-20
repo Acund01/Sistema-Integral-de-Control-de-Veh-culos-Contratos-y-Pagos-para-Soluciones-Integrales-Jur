@@ -170,23 +170,23 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
   };
 
   const handleDeleteVehicle = (vehicleId: string) => {
-    if (!confirm('¿Desactivar este vehículo? (Se puede restaurar luego)')) return;
+    if (!confirm('¿Eliminar definitivamente este vehículo? Esta acción no se puede deshacer.')) return;
     if (onDeleteVehicle) {
       onDeleteVehicle(vehicleId);
     } else {
-      vehiculoService.delete(vehicleId)
+      vehiculoService.purge(vehicleId)
         .then(async () => {
-          alert('Vehículo desactivado');
-          // Recargar lista para reflejar activo=false sin eliminarlo visualmente
+          alert('Vehículo eliminado definitivamente');
+          // Recargar lista
           try {
             const data = await vehiculoService.findAll();
             setItems(data);
           } catch (e) {
-            // fallback: marcar localmente
-            setItems(prev => prev.map(v => v.id === vehicleId ? { ...v, activo: false } : v));
+            // fallback: eliminar localmente
+            setItems(prev => prev.filter(v => v.id !== vehicleId));
           }
         })
-        .catch(err => alert(err?.message || 'No se pudo desactivar el vehículo'))
+        .catch(err => alert(err?.message || 'No se pudo eliminar el vehículo'))
     }
   };
 

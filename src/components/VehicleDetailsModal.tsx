@@ -20,10 +20,20 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
 
   const handleDelete = () => {
     if (onDelete) {
-      if (confirm(`¿Eliminar el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}?`)) {
+      if (confirm(`¿Eliminar definitivamente el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}? Esta acción no se puede deshacer.`)) {
         onDelete(vehicle.id);
         onClose();
       }
+    }
+  };
+
+  const handleChangeActivo = () => {
+    if (!onChangeActivo) return;
+    const newStatus = !vehicle.activo;
+    const action = newStatus ? 'activar' : 'inactivar';
+    if (confirm(`¿Está seguro de ${action} este vehículo?`)) {
+      onChangeActivo(vehicle.id, newStatus);
+      onClose();
     }
   };
 
@@ -95,7 +105,7 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
 
           {onChangeStatus && (
             <div className="modal-note" style={{ marginTop: 20 }}>
-              <div style={{ marginBottom: 8, fontWeight: 600, color: '#374151' }}>Cambiar estado</div>
+              <div style={{ marginBottom: 8, fontWeight: 600, color: '#374151' }}>Cambiar estado operativo</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {(['DISPONIBLE','MANTENIMIENTO','ALQUILADO'] as EstadoVehiculo[]).map(s => (
                   <button
@@ -115,42 +125,23 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
               </div>
             </div>
           )}
-          {onChangeActivo && (
-            <div className="modal-note" style={{ marginTop: 16 }}>
-              <div style={{ marginBottom: 8, fontWeight: 600, color: '#374151' }}>Activación</div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={() => onChangeActivo(vehicle.id, true)}
-                  className="btn-secondary"
-                  style={{
-                    borderColor: vehicle.activo ? '#111827' : undefined,
-                    background: vehicle.activo ? '#111827' : undefined,
-                    color: vehicle.activo ? '#fff' : undefined,
-                  }}
-                >Activo</button>
-                <button
-                  type="button"
-                  onClick={() => onChangeActivo(vehicle.id, false)}
-                  className="btn-secondary"
-                  style={{
-                    borderColor: !vehicle.activo ? '#111827' : undefined,
-                    background: !vehicle.activo ? '#111827' : undefined,
-                    color: !vehicle.activo ? '#fff' : undefined,
-                  }}
-                >Inactivo</button>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>Cerrar</button>
+                    {onChangeActivo && (
+                      <button 
+                        className={vehicle.activo ? "btn-warning" : "btn-success"} 
+                        onClick={handleChangeActivo}
+                      >
+                        {vehicle.activo ? 'Inactivar' : 'Activar'}
+                      </button>
+                    )}
           {onEdit && (
             <button className="btn-primary" onClick={() => onEdit(vehicle)}>Editar</button>
           )}
           {onDelete && (
-            <button className="btn-danger" onClick={handleDelete}>{vehicle.activo ? 'Desactivar' : 'Eliminar'}</button>
+            <button className="btn-danger" onClick={handleDelete}>Eliminar</button>
           )}
         </div>
       </div>

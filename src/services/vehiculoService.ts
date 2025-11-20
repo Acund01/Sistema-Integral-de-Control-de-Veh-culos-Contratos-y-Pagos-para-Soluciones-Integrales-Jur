@@ -81,6 +81,12 @@ class VehiculoService {
     if (!res.ok) throw new Error(`Error al eliminar vehículo ${id}: ${res.statusText}`);
   }
 
+  /** DELETE /api/vehiculos/permanente/{id} - Eliminación definitiva */
+  async purge(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/permanente/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`Error al eliminar definitivamente vehículo ${id}: ${res.status} ${res.statusText}`);
+  }
+
   /** PUT /api/vehiculos/{id}/restore - Restaurar (activar) vehículo previamente desactivado */
   async restore(id: string): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/${id}/restore`, { method: 'PUT' });
