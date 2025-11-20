@@ -140,6 +140,20 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
               <div className="detail-label">Total</div>
               <div className="detail-value">S/. {Number(contractData.montoTotal || 0).toLocaleString()}</div>
             </div>
+            {contractData.observaciones && (
+              <div className="detail-row">
+                <div className="detail-label">Observaciones</div>
+                <div className="detail-value">
+                  {contractData.observaciones
+                    .split('|')
+                    .map(o => o.trim())
+                    .filter(Boolean)
+                    .map((o, idx) => (
+                      <div key={idx}>{o}</div>
+                    ))}
+                </div>
+              </div>
+            )}
             <div className="detail-row">
               <div className="detail-label">ID</div>
               <div className="detail-value monospace">{contractData.id}</div>

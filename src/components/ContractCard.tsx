@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import '../styles/ContractCard.css';
 import type { ContratoResponseDto } from '../types/contract';
 
@@ -32,6 +32,41 @@ const ContractCard: React.FC<ContractCardProps> = ({ contract, onViewDetails, on
     if (est === 'CANCELADO') return <span className="contract-status-badge pendiente">⏱ Cancelado</span>;
     return <span className="contract-status-badge activo">✓ Activo</span>;
   };
+
+  // Lógica para recalcular el total igual que el resumen previo a crear
+  const computedTotal = useMemo(() => {
+    try {
+      const days = contract.diasTotales || 0;
+      const daily = contract.detalles?.[0]?.precioDiario || 0;
+      const subtotal = days * daily;
+      const obs = contract.observaciones || '';
+
+      // Intentar extraer depósito numérico
+      let deposit = 0;
+      const depMatch = obs.match(/Depósito:\s*S\/.?\s*(\d+[,.]?\d*)/i);
+      if (depMatch) {
+        deposit = Number(depMatch[1].replace(',', '.')) || 0;
+      }
+
+      // Si no hay depósito, usar seguro por día (lógica original)
+      let insuranceTotal = 0;
+      if (deposit > 0) {
+        insuranceTotal = deposit; // Ajuste solicitado: tratar depósito como bloque adicional
+      } else {
+        const insuranceBasic = /Seguro:\s*Básico/i.test(obs);
+        const insuranceFull = /Seguro:\s*Completo/i.test(obs);
+        const rate = insuranceBasic ? 15 : (insuranceFull ? 30 : 0);
+        insuranceTotal = rate * days;
+      }
+
+      const taxableBase = subtotal + insuranceTotal;
+      const taxes = taxableBase * 0.18;
+      const total = taxableBase + taxes;
+      return total;
+    } catch {
+      return Number(contract.montoTotal || 0);
+    }
+  }, [contract]);
 
   return (
     <div className="contract-card">
@@ -100,7 +135,7 @@ const ContractCard: React.FC<ContractCardProps> = ({ contract, onViewDetails, on
             </span>
             <div className="detail-content-small">
               <span className="detail-label-small">Total</span>
-              <span className="detail-value-small">S/. {Number(contract.montoTotal || 0).toLocaleString()}</span>
+              <span className="detail-value-small">S/. {computedTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
             </div>
           </div>
 

@@ -85,10 +85,10 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
   }, [startDate, endDate]);
 
   const numDaily = typeof dailyRate === 'number' ? dailyRate : 0;
-  const insurancePerDay = INSURANCE_DAILY_RATE[insurance];
+  // Ajuste: utilizar el valor ingresado en depósito como costo de seguro único
+  const insuranceTotal = typeof deposit === 'number' ? deposit : 0;
 
   const subtotal = days * numDaily;
-  const insuranceTotal = days * insurancePerDay;
   const taxes = (subtotal + insuranceTotal) * 0.18;
   const total = subtotal + insuranceTotal + taxes;
 
