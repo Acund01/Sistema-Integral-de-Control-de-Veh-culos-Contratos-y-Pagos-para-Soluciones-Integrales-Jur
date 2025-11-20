@@ -124,9 +124,15 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
         detalles: [detalle],
       };
 
-      const created: ContratoResponseDto = await contratoService.create(dto);
-      // Compat opcional con callbacks legacy
-      onCreate?.(created);
+      let result: ContratoResponseDto;
+      if (contractToEdit) {
+        result = await contratoService.update(contractToEdit.id, dto);
+        alert('Contrato actualizado');
+      } else {
+        result = await contratoService.create(dto);
+        alert('Contrato creado');
+      }
+      onCreate?.(result);
       onNavigate?.('contratos');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'No se pudo crear el contrato';
@@ -139,15 +145,31 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
   // Preseleccionar cliente y vehículo en modo edición según datos del contrato
   useEffect(() => {
     if (!contractToEdit) return;
-    // Si viene un contrato a editar, cargar campos básicos si están disponibles
-    setStartDate(contractToEdit?.fechaInicio || '');
-    setEndDate(contractToEdit?.fechaFin || '');
-    const detalle = Array.isArray(contractToEdit?.detalles) ? contractToEdit.detalles[0] : undefined;
+    setStartDate(contractToEdit.fechaInicio || '');
+    setEndDate(contractToEdit.fechaFin || '');
+    const detalle = contractToEdit.detalles?.[0];
     if (detalle) {
       setVehicleId(detalle.idVehiculo || '');
       setDailyRate(detalle.precioDiario ?? 850);
     }
-    setClientId(contractToEdit?.cliente?.id || '');
+    setClientId(contractToEdit.cliente?.id || '');
+    // Parse observaciones en edición
+    const obs = (contractToEdit.observaciones || '').split('|').map(o => o.trim()).filter(Boolean);
+    obs.forEach(o => {
+      if (/^Seguro:\s*/i.test(o)) {
+        const val = o.replace(/^Seguro:\s*/i, '').toLowerCase();
+        if (val.includes('básico') || val.includes('basico')) setInsurance('basico');
+        else if (val.includes('completo')) setInsurance('completo');
+      } else if (/^Depósito:\s*S\/.?/i.test(o)) {
+        const num = o.replace(/^Depósito:\s*S\/.?\s*/i, '').replace(/[,]/g,'');
+        const parsed = Number(num);
+        if (!isNaN(parsed)) setDeposit(parsed);
+      } else if (/^Conductores:/i.test(o)) {
+        setExtraDrivers(o.replace(/^Conductores:\s*/i,'').trim());
+      } else if (/^Solicitudes:/i.test(o)) {
+        setSpecialRequests(o.replace(/^Solicitudes:\s*/i,'').trim());
+      }
+    });
   }, [contractToEdit]);
 
   return (

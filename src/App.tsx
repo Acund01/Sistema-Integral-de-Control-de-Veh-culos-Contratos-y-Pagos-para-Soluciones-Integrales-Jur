@@ -6,6 +6,7 @@ import RegisterClient from './pages/RegisterClient';
 import VehicleManagement from './pages/VehicleManagement';
 import ContractManagement from './pages/ContractManagement';
 import CreateContract from './pages/CreateContract';
+import type { ContratoResponseDto } from './types/contract';
 import Reports from './pages/Reports';
 import Login from './pages/Login';
 import type { User } from './types';
@@ -17,6 +18,8 @@ function App() {
   // Estado para edición de cliente
   const [editingClientId, setEditingClientId] = useState<string | undefined>(undefined);
   const [editingClientInitialData, setEditingClientInitialData] = useState<any | undefined>(undefined);
+  // Estado para edición de contrato
+  const [editingContract, setEditingContract] = useState<ContratoResponseDto | null>(null);
 
   const handleMenuClick = (menuId: string) => {
     setActiveMenu(menuId);
@@ -31,6 +34,15 @@ function App() {
   const clearEditClient = () => {
     setEditingClientId(undefined);
     setEditingClientInitialData(undefined);
+  };
+
+  const startEditContract = (contract: ContratoResponseDto) => {
+    setEditingContract(contract);
+    setActiveMenu('crear-contrato');
+  };
+
+  const clearEditContract = () => {
+    setEditingContract(null);
   };
 
   const handleLogin = (username: string, password: string) => {
@@ -91,10 +103,21 @@ function App() {
             <VehicleManagement startAdding={true} />
           )}
         {activeMenu === 'contratos' && (
-          <ContractManagement onNavigate={(menuId: string) => setActiveMenu(menuId)} />
+          <ContractManagement 
+            onNavigate={(menuId: string) => setActiveMenu(menuId)}
+            onStartEditContract={(c) => startEditContract(c)}
+          />
         )}
         {activeMenu === 'crear-contrato' && (
-          <CreateContract onNavigate={(menuId: string) => setActiveMenu(menuId)} />
+          <CreateContract 
+            onNavigate={(menuId: string) => {
+              setActiveMenu(menuId);
+              if (menuId !== 'crear-contrato') {
+                clearEditContract();
+              }
+            }}
+            contractToEdit={editingContract ?? undefined}
+          />
         )}
         {activeMenu === 'reportes' && <Reports />}
       </main>
