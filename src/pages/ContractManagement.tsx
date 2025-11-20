@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ContractCard from '../components/ContractCard';
 import ContractDetailsModal from '../components/ContractDetailsModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../styles/ContractManagement.css';
 import type { ContratoResponseDto, ContractStats } from '../types/contract';
 import { contratoService } from '../services/contratoService';
@@ -18,6 +19,18 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
   const [items, setItems] = useState<ContratoResponseDto[]>(Array.isArray(contracts) ? contracts : []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   // Si nos pasan contratos por props, sincronizamos una sola vez o cuando cambie realmente el array
   useEffect(() => {
@@ -103,7 +116,15 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
     if (onDeleteContract) return onDeleteContract(id);
     contratoService.delete(id)
       .then(() => setItems(prev => prev.filter(c => c.id !== id)))
-      .catch(err => alert(err?.message || 'No se pudo eliminar el contrato'));
+      .catch(err => {
+        setConfirmDialog({
+          isOpen: true,
+          title: 'Error',
+          message: err?.message || 'No se pudo eliminar el contrato',
+          type: 'danger',
+          onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+        });
+      });
   };
   const handleEdit = (contract: ContratoResponseDto) => onStartEditContract?.(contract);
 
@@ -249,6 +270,15 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
           onDelete={(id) => { handleDelete(id); setSelectedContract(null); }}
         />
       )}
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

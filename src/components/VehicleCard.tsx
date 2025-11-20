@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ConfirmDialog } from './ConfirmDialog';
 import '../styles/VehicleCard.css';
 import type { Vehiculo, EstadoVehiculo, TipoCombustible } from '../types/vehicle';
 
@@ -12,6 +13,18 @@ interface VehicleCardProps {
 const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEditVehicle, onDeleteVehicle }) => {
   const [openMenu, setOpenMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -112,9 +125,16 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
               </button>
                 <button className="vehicle-menu-item danger" role="menuitem" onClick={() => {
                   if (onDeleteVehicle) {
-                    if (confirm(`¿Desactivar el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}?`)) {
-                      onDeleteVehicle(vehicle.id);
-                    }
+                    setConfirmDialog({
+                      isOpen: true,
+                      title: vehicle.activo ? 'Desactivar vehículo' : 'Eliminar vehículo',
+                      message: `¿${vehicle.activo ? 'Desactivar' : 'Eliminar'} el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}?`,
+                      type: 'danger',
+                      onConfirm: () => {
+                        onDeleteVehicle(vehicle.id);
+                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                      },
+                    });
                   }
                   setOpenMenu(false);
                 }}>
@@ -125,6 +145,15 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
           )}
         </div>
       </div>
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

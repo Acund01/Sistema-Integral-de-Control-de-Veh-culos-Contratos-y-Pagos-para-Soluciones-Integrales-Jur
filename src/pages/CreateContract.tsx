@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../styles/CreateContract.css';
 import type { ContratoRequestDto, ContratoResponseDto, DetalleContratoDto } from '../types/contract';
 import type { ClienteUnion } from '../types/client';
@@ -43,6 +44,18 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
   const [specialRequests, setSpecialRequests] = useState('');
   const [clients, setClients] = useState<ClienteUnion[]>(clientsProp);
   const [vehicles, setVehicles] = useState<Vehiculo[]>(vehiclesProp);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
   // const [loading, setLoading] = useState<boolean>(false);
   // const [error, setError] = useState<string | null>(null);
 
@@ -127,16 +140,40 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
       let result: ContratoResponseDto;
       if (contractToEdit) {
         result = await contratoService.update(contractToEdit.id, dto);
-        alert('Contrato actualizado');
+        setConfirmDialog({
+          isOpen: true,
+          title: 'Éxito',
+          message: 'Contrato actualizado',
+          type: 'success',
+          onConfirm: () => {
+            setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+            onCreate?.(result);
+            onNavigate?.('contratos');
+          },
+        });
       } else {
         result = await contratoService.create(dto);
-        alert('Contrato creado');
+        setConfirmDialog({
+          isOpen: true,
+          title: 'Éxito',
+          message: 'Contrato creado',
+          type: 'success',
+          onConfirm: () => {
+            setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+            onCreate?.(result);
+            onNavigate?.('contratos');
+          },
+        });
       }
-      onCreate?.(result);
-      onNavigate?.('contratos');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'No se pudo crear el contrato';
-      alert(msg);
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Error',
+        message: msg,
+        type: 'danger',
+        onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+      });
     }
   };
 
@@ -338,6 +375,15 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
           </div>
         </aside>
       </form>
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

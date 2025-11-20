@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { ContratoResponseDto } from '../types/contract';
+import { ConfirmDialog } from './ConfirmDialog';
 import '../styles/ClientDetailsModal.css';
 import { comprobanteService } from '../services/comprobanteService';
 import type { ComprobanteRequestDto } from '../services/comprobanteService';
@@ -16,6 +17,18 @@ interface ContractDetailsModalProps {
 const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, onClose, onEdit, onDelete }) => {
   // Mantener una copia local para poder actualizar estado (finalización)
   const [contractData, setContractData] = useState<ContratoResponseDto>(contract);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -24,10 +37,17 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
 
   const handleDelete = () => {
     if (onDelete) {
-      if (confirm(`¿Eliminar el contrato ${contractData.codigoContrato}?`)) {
-        onDelete(contractData.id);
-        onClose();
-      }
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Eliminar contrato',
+        message: `¿Eliminar el contrato ${contractData.codigoContrato}?`,
+        type: 'danger',
+        onConfirm: () => {
+          onDelete(contractData.id);
+          onClose();
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        },
+      });
     }
   };
 
@@ -61,7 +81,13 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
       // liberar luego de unos minutos (opcional)
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (e) {
-      alert((e as Error).message || 'Error al descargar comprobante');
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Error',
+        message: (e as Error).message || 'Error al descargar comprobante',
+        type: 'danger',
+        onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+      });
     } finally {
       setLoadingComprobante(false);
     }
@@ -81,22 +107,48 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
       window.open(url, '_blank');
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (e) {
-      alert((e as Error).message || 'Error al generar comprobante');
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Error',
+        message: (e as Error).message || 'Error al generar comprobante',
+        type: 'danger',
+        onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+      });
     } finally {
       setGenerating(false);
     }
   };
 
   const handleFinalizarContrato = async () => {
-    try {
-      if (!confirm('¿Confirmas que deseas finalizar este contrato?')) return;
-      const actualizado = await contratoService.finalizar(contractData.id);
-      setContractData(actualizado);
-      activityService.log(`Finalizaste el contrato ${actualizado.codigoContrato}`);
-      // Forzar verificación de comprobante tras finalización
-    } catch (e) {
-      alert((e as Error).message || 'Error al finalizar contrato');
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Finalizar contrato',
+      message: '¿Confirmas que deseas finalizar este contrato?',
+      type: 'warning',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          const actualizado = await contratoService.finalizar(contractData.id);
+          setContractData(actualizado);
+          activityService.log(`Finalizaste el contrato ${actualizado.codigoContrato}`);
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Éxito',
+            message: 'Contrato finalizado correctamente',
+            type: 'success',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+        } catch (e) {
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Error',
+            message: (e as Error).message || 'Error al finalizar contrato',
+            type: 'danger',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+        }
+      },
+    });
   };
 
   return (
@@ -201,6 +253,15 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
           )}
         </div>
       </div>
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

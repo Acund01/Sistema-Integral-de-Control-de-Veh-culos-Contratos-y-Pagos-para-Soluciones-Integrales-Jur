@@ -3,6 +3,7 @@ import '../styles/RegisterClient.css';
 import type { ClienteNaturalDto, ClienteEmpresaDto } from '../types/client';
 import { clienteService } from '../services/clienteService';
 import { activityService } from '../services/activityService';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 // Tipo local de compatibilidad con componentes padres (si lo usan)
 type LegacyClientPayload = {
@@ -106,6 +107,18 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
   const [errors, setErrors] = useState<Errors>({});
   const [autoValidate, setAutoValidate] = useState<boolean>(false);
   const [, setTouched] = useState<Record<string, boolean>>({});
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const validate = useCallback((data: FormData, type: 'natural' | 'company'): Errors => {
     const err: Errors = {};
@@ -232,11 +245,25 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
         activityService.log(clientId ? `Actualizaste empresa: ${form.razonSocial}` : `Registraste empresa: ${form.razonSocial}`);
       }
 
-      alert(clientId ? 'Cliente actualizado' : 'Cliente registrado');
-      onNavigate?.('clientes');
+      setConfirmDialog({
+        isOpen: true,
+        title: clientId ? 'Cliente actualizado' : 'Cliente registrado',
+        message: clientId ? 'Los datos del cliente se han actualizado correctamente' : 'El cliente se ha registrado exitosamente en el sistema',
+        type: 'success',
+        onConfirm: () => {
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          onNavigate?.('clientes');
+        },
+      });
     } catch (err) {
       console.error(err);
-      alert(`Error al ${clientId ? 'actualizar' : 'registrar'} cliente: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Error',
+        message: `Error al ${clientId ? 'actualizar' : 'registrar'} cliente: ${err instanceof Error ? err.message : 'Error desconocido'}`,
+        type: 'danger',
+        onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+      });
     }
   };
 
@@ -512,6 +539,15 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
           <button type="submit" className="btn-primary">{clientId ? 'Guardar Cambios' : 'Registrar Cliente'}</button>
         </div>
       </form>
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

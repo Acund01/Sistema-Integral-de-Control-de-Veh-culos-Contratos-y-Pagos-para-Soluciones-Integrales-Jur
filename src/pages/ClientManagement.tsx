@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import ClientCard from '../components/ClientCard';
 import ClientDetailsModal from '../components/ClientDetailsModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../styles/ClientManagement.css';
 import type { ClienteUnion, ClientStats } from '../types/client';
 import { clienteService } from '../services/clienteService';
@@ -17,6 +18,18 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate, onEditC
   const [clients, setClients] = useState<ClienteUnion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   // Cargar clientes al montar el componente
   useEffect(() => {
@@ -125,27 +138,68 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate, onEditC
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Eliminar definitivamente este cliente? Esta acción no se puede deshacer.')) return;
-    try {
-      await clienteService.purge(id);
-      alert('Cliente eliminado definitivamente');
-      await loadClients();
-    } catch (err) {
-      console.error('Error al eliminar cliente:', err);
-      alert(`Error al eliminar cliente: ${err instanceof Error ? err.message : 'Error desconocido'}`);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar cliente',
+      message: '¿Eliminar definitivamente este cliente? Esta acción no se puede deshacer.',
+      type: 'danger',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          await clienteService.purge(id);
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Éxito',
+            message: 'Cliente eliminado definitivamente',
+            type: 'success',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+          await loadClients();
+        } catch (err) {
+          console.error('Error al eliminar cliente:', err);
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Error',
+            message: `Error al eliminar cliente: ${err instanceof Error ? err.message : 'Error desconocido'}`,
+            type: 'danger',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+        }
+      },
+    });
   };
 
   const handleChangeStatus = async (id: string, activo: boolean) => {
-    try {
-      await clienteService.setActivo(id, activo);
-      alert(`Cliente ${activo ? 'activado' : 'desactivado'} correctamente`);
-      await loadClients();
-      setSelectedClient(null);
-    } catch (err) {
-      console.error('Error al cambiar estado:', err);
-      alert(`Error al cambiar estado: ${err instanceof Error ? err.message : 'Error desconocido'}`);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: `${activo ? 'Activar' : 'Desactivar'} cliente`,
+      message: `¿Está seguro de ${activo ? 'activar' : 'desactivar'} este cliente?`,
+      type: 'warning',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          await clienteService.setActivo(id, activo);
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Éxito',
+            message: `Cliente ${activo ? 'activado' : 'desactivado'} correctamente`,
+            type: 'success',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+          await loadClients();
+          setSelectedClient(null);
+        } catch (err) {
+          console.error('Error al cambiar estado:', err);
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Error',
+            message: `Error al cambiar estado: ${err instanceof Error ? err.message : 'Error desconocido'}`,
+            type: 'danger',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+        }
+      },
+    });
   };
 
   const handleFilters = () => {
@@ -284,8 +338,17 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate, onEditC
             <p>No se encontraron clientes que coincidan con la búsqueda</p>
           </div>
         )}
-      </div>
+        </div>
       )}
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

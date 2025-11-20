@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { ConfirmDialog } from './ConfirmDialog';
 import '../styles/ContractCard.css';
 import type { ContratoResponseDto } from '../types/contract';
 
@@ -12,6 +13,18 @@ interface ContractCardProps {
 const ContractCard: React.FC<ContractCardProps> = ({ contract, onViewDetails, onEdit, onDelete }) => {
   const [openMenu, setOpenMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
   const today = new Date();
   const clamp = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const isEnded = clamp(new Date(contract.fechaFin)) < clamp(today);
@@ -167,7 +180,16 @@ const ContractCard: React.FC<ContractCardProps> = ({ contract, onViewDetails, on
                 </button>
                 <button className="contract-menu-item danger" role="menuitem" onClick={() => {
                   if (onDelete) {
-                    if (confirm(`¿Eliminar el contrato ${contract.codigoContrato}?`)) onDelete(contract.id);
+                    setConfirmDialog({
+                      isOpen: true,
+                      title: 'Eliminar contrato',
+                      message: `¿Eliminar el contrato ${contract.codigoContrato}?`,
+                      type: 'danger',
+                      onConfirm: () => {
+                        onDelete(contract.id);
+                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                      },
+                    });
                   }
                   setOpenMenu(false);
                 }}>
@@ -179,6 +201,15 @@ const ContractCard: React.FC<ContractCardProps> = ({ contract, onViewDetails, on
           </div>
         </div>
       </div>
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

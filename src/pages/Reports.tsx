@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ReportCard from '../components/ReportCard';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../styles/Reports.css';
 import { generarPagosExcel, generarUsoVehiculosExcel, generarIngresosMensualesExcel } from '../services/reporteService';
 import { datosIngresosMensuales } from '../services/reporteService';
@@ -25,6 +26,18 @@ const Reports: React.FC = () => {
   const [activeContracts, setActiveContracts] = useState<number>(0);
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
   const [ingresosMensuales, setIngresosMensuales] = useState<Array<{ mes: string; total: number }>>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const reports: RealReport[] = [
     {
@@ -158,7 +171,13 @@ const Reports: React.FC = () => {
         activityService.log(`Descargaste reporte de Ingresos Mensuales (${year})`);
       }
     } catch (e) {
-      alert((e as Error).message || 'Error al descargar');
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Error',
+        message: (e as Error).message || 'Error al descargar',
+        type: 'danger',
+        onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+      });
     } finally {
       setDownloadingId(null);
     }
@@ -169,7 +188,13 @@ const Reports: React.FC = () => {
       setGeneratingId(r.id);
       await handleDownload(r); // reutiliza misma lógica
     } catch (e) {
-      alert((e as Error).message || 'Error al generar');
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Error',
+        message: (e as Error).message || 'Error al generar',
+        type: 'danger',
+        onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+      });
     } finally {
       setGeneratingId(null);
     }
@@ -180,7 +205,13 @@ const Reports: React.FC = () => {
       await handleGenerate(r);
     }
     activityService.log('Generaste todos los reportes para el período seleccionado');
-    alert('Generación masiva completada');
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Éxito',
+      message: 'Generación masiva completada',
+      type: 'success',
+      onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+    });
   };
 
   return (
@@ -297,6 +328,15 @@ const Reports: React.FC = () => {
         ))}
         </div>
       </div>
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

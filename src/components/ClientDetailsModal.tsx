@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { ClienteUnion } from '../types/client';
+import { ConfirmDialog } from './ConfirmDialog';
 import '../styles/ClientDetailsModal.css';
 import { clienteService } from '../services/clienteService';
 
@@ -15,6 +16,18 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
   // Estado local para permitir recarga completa de información (incl. campos opcionales)
   const [fullClient, setFullClient] = useState<ClienteUnion>(client);
   const [loadingExtra, setLoadingExtra] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'warning' | 'danger' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -54,29 +67,65 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
 
   const handleDelete = async () => {
     if (!onDelete) return;
-    if (!confirm(`¿Eliminar definitivamente al cliente "${displayName}"? Esta acción no se puede deshacer.`)) return;
-    try {
-      await clienteService.delete(fullClient.id);
-      alert('Cliente eliminado');
-      onDelete(fullClient.id);
-      onClose();
-    } catch (e) {
-      alert(`Error al eliminar: ${e instanceof Error ? e.message : 'Error desconocido'}`);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar cliente',
+      message: `¿Eliminar definitivamente al cliente "${displayName}"? Esta acción no se puede deshacer.`,
+      type: 'danger',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          await clienteService.delete(fullClient.id);
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Éxito',
+            message: 'Cliente eliminado',
+            type: 'success',
+            onConfirm: () => {
+              setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+              onDelete(fullClient.id);
+              onClose();
+            },
+          });
+        } catch (e) {
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Error',
+            message: `Error al eliminar: ${e instanceof Error ? e.message : 'Error desconocido'}`,
+            type: 'danger',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+        }
+      },
+    });
   };
 
   const handleChangeStatus = async () => {
     if (!onChangeStatus) return;
     const newStatus = !fullClient.activo;
     const action = newStatus ? 'activar' : 'inactivar';
-    if (!confirm(`¿Está seguro de ${action} a "${displayName}"?`)) return;
-    try {
-      await clienteService.setActivo(fullClient.id, newStatus);
-      onChangeStatus(fullClient.id, newStatus);
-      onClose();
-    } catch (e) {
-      alert(`Error al ${action}: ${e instanceof Error ? e.message : 'Error desconocido'}`);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: `${newStatus ? 'Activar' : 'Inactivar'} cliente`,
+      message: `¿Está seguro de ${action} a "${displayName}"?`,
+      type: 'warning',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          await clienteService.setActivo(fullClient.id, newStatus);
+          onChangeStatus(fullClient.id, newStatus);
+          onClose();
+        } catch (e) {
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Error',
+            message: `Error al ${action}: ${e instanceof Error ? e.message : 'Error desconocido'}`,
+            type: 'danger',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+        }
+      },
+    });
   };
 
   const created = fullClient.creadoEn ? new Date(fullClient.creadoEn) : null;
@@ -171,6 +220,15 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
           )}
         </div>
       </div>
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

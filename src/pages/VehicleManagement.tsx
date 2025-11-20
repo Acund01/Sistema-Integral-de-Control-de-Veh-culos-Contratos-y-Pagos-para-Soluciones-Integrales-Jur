@@ -164,7 +164,13 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'No se pudo guardar el vehículo';
-      alert(msg);
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Error',
+        message: msg,
+        type: 'danger',
+        onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+      });
     }
     setIsAdding(false);
     setEditingVehicleId(null);
@@ -280,7 +286,15 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
           setItems(prev => prev.map(v => v.id === id ? updated : v));
           setSelectedVehicle(prev => (prev && prev.id === id ? updated : prev));
         })
-        .catch(err => alert(err?.message || 'No se pudo actualizar el estado'));
+        .catch(err => {
+          setConfirmDialog({
+            isOpen: true,
+            title: 'Error',
+            message: err?.message || 'No se pudo actualizar el estado',
+            type: 'danger',
+            onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+          });
+        });
     }
   };
 
