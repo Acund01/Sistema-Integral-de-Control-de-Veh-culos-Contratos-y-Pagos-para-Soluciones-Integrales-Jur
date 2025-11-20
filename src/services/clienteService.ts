@@ -168,6 +168,35 @@ class ClienteService {
   }
 
   /**
+   * DELETE definitivo /api/clientes/{id}/permanente - Elimina físicamente el cliente.
+   * Requiere que el backend exponga este endpoint. Si no existe, retornará error.
+   */
+  async purge(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/${id}/permanente`, { method: 'DELETE' });
+    if (!response.ok) {
+      throw new Error(`Error al eliminar definitivamente cliente ${id}: ${response.status} ${response.statusText}`);
+    }
+  }
+
+  /**
+   * Eliminación definitiva con fallback: intenta purge; si el endpoint no existe (404) o no soportado,
+   * recurre a delete (soft). Úsalo para "Eliminar para siempre" en UI.
+   */
+  async permanentDelete(id: string): Promise<void> {
+    try {
+      await this.purge(id);
+    } catch (e) {
+      // Si falla por 404/405 intentamos el delete normal
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/404|405/.test(msg)) {
+        await this.delete(id);
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  /**
    * PATCH /api/clientes/{id}/restaurar - Restaurar / reactivar cliente inactivo
    * Si tu backend usa otra ruta (p.ej. /activar), ajusta aquí.
    */

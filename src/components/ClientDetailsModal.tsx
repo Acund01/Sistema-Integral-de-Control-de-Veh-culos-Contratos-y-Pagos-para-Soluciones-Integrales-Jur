@@ -52,12 +52,16 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
       : fullClient.razonSocial
   ), [fullClient]);
 
-  const handleDelete = () => {
-    if (onDelete) {
-      if (confirm(`¿Eliminar al cliente "${displayName}"?`)) {
-        onDelete(fullClient.id);
-        onClose();
-      }
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    if (!confirm(`¿Desactivar cliente "${displayName}"? Podrás reactivarlo luego.`)) return;
+    try {
+      await clienteService.delete(fullClient.id);
+      alert('Cliente desactivado');
+      onDelete(fullClient.id);
+      onClose();
+    } catch (e) {
+      alert(`Error al desactivar: ${e instanceof Error ? e.message : 'Error desconocido'}`);
     }
   };
 

@@ -24,6 +24,10 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
   }, []);
 
   const getStatusBadge = () => {
+    // Si está inactivo no mostramos estado operativo, solo inactivo
+    if (!vehicle.activo) {
+      return <span className="status-badge inactivo">Inactivo</span>;
+    }
     switch (vehicle.estado as EstadoVehiculo) {
       case 'DISPONIBLE':
         return <span className="status-badge disponible">✓ Disponible</span>;
@@ -106,17 +110,17 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
                 <span className="menu-icon">✏️</span>
                 Editar vehículo
               </button>
-              <button className="vehicle-menu-item danger" role="menuitem" onClick={() => {
-                if (onDeleteVehicle) {
-                  if (confirm(`¿Eliminar el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}?`)) {
-                    onDeleteVehicle(vehicle.id);
+                <button className="vehicle-menu-item danger" role="menuitem" onClick={() => {
+                  if (onDeleteVehicle) {
+                    if (confirm(`¿Desactivar el vehículo ${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}?`)) {
+                      onDeleteVehicle(vehicle.id);
+                    }
                   }
-                }
-                setOpenMenu(false);
-              }}>
-                <span className="menu-icon">🗑️</span>
-                Eliminar vehículo
-              </button>
+                  setOpenMenu(false);
+                }}>
+                  <span className="menu-icon">🗑️</span>
+                  {vehicle.activo ? 'Desactivar vehículo' : 'Eliminar (inactivo)'}
+                </button>
             </div>
           )}
         </div>

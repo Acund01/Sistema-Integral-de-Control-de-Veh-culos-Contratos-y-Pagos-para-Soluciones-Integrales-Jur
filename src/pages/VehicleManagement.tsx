@@ -170,12 +170,35 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
   };
 
   const handleDeleteVehicle = (vehicleId: string) => {
+    if (!confirm('¿Desactivar este vehículo? (Se puede restaurar luego)')) return;
     if (onDeleteVehicle) {
       onDeleteVehicle(vehicleId);
     } else {
       vehiculoService.delete(vehicleId)
-        .then(() => setItems(prev => prev.filter(v => v.id !== vehicleId)))
-        .catch(err => alert(err?.message || 'No se pudo eliminar el vehículo'));
+        .then(async () => {
+          alert('Vehículo desactivado');
+          // Recargar lista para reflejar activo=false sin eliminarlo visualmente
+          try {
+            const data = await vehiculoService.findAll();
+            setItems(data);
+          } catch (e) {
+            // fallback: marcar localmente
+            setItems(prev => prev.map(v => v.id === vehicleId ? { ...v, activo: false } : v));
+          }
+        })
+        .catch(err => alert(err?.message || 'No se pudo desactivar el vehículo'))
+    }
+  };
+
+  const handleChangeActivo = async (id: string, activo: boolean) => {
+    try {
+      await vehiculoService.setActivo(id, activo);
+      alert(`Vehículo ${activo ? 'activado' : 'desactivado'} correctamente`);
+      const data = await vehiculoService.findAll();
+      setItems(data);
+      setSelectedVehicle(null);
+    } catch (e) {
+      alert(`Error al cambiar estado de activación: ${e instanceof Error ? e.message : 'Error desconocido'}`);
     }
   };
 
@@ -419,6 +442,7 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
               onEdit={(v) => { setSelectedVehicle(null); handleStartEditVehicle(v); }}
               onDelete={(id) => { handleDeleteVehicle(id); setSelectedVehicle(null); }}
               onChangeStatus={handleChangeStatus}
+              onChangeActivo={handleChangeActivo}
             />
           )}
         </>

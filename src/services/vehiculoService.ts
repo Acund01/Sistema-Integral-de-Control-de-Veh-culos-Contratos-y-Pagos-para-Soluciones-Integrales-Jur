@@ -81,6 +81,24 @@ class VehiculoService {
     if (!res.ok) throw new Error(`Error al eliminar vehículo ${id}: ${res.statusText}`);
   }
 
+  /** PUT /api/vehiculos/{id}/restore - Restaurar (activar) vehículo previamente desactivado */
+  async restore(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/${id}/restore`, { method: 'PUT' });
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(`Error al restaurar vehículo ${id}: ${res.status} ${res.statusText} - ${t}`);
+    }
+  }
+
+  /** Cambiar activo/inactivo usando delete (soft) y restore */
+  async setActivo(id: string, activo: boolean): Promise<void> {
+    if (activo) {
+      return this.restore(id);
+    } else {
+      return this.delete(id);
+    }
+  }
+
   /** GET /api/vehiculos/contratos/{id} - para integrarse con contratos */
   async obtenerParaContrato(id: string): Promise<VehiculoContratoDto> {
     const res = await fetch(`${API_BASE_URL}/contratos/${id}`);

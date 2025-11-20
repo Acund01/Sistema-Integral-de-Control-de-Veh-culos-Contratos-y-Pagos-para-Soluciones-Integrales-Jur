@@ -7,10 +7,11 @@ interface VehicleDetailsModalProps {
   onClose: () => void;
   onEdit?: (vehicle: Vehiculo) => void;
   onDelete?: (id: string) => void;
-  onChangeStatus?: (id: string, status: EstadoVehiculo) => void;
+  onChangeStatus?: (id: string, status: EstadoVehiculo) => void; // estado operativo
+  onChangeActivo?: (id: string, activo: boolean) => void; // activar/desactivar (soft delete / restore)
 }
 
-const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onClose, onEdit, onDelete, onChangeStatus }) => {
+const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onClose, onEdit, onDelete, onChangeStatus, onChangeActivo }) => {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -45,8 +46,15 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
             <div className="modal-avatar">🚗</div>
             <div>
               <h2 id="vehicle-details-title" className="modal-title">{vehicle.modelo?.marca?.nombre} {vehicle.modelo?.nombre}</h2>
-              <div className={`status-badge ${vehicle.estado === 'DISPONIBLE' ? 'active' : 'inactive'}`}>
-                {vehicle.estado === 'DISPONIBLE' ? 'Disponible' : vehicle.estado === 'ALQUILADO' ? 'Alquilado' : 'Mantenimiento'}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {vehicle.activo && (
+                  <div className={`status-badge ${vehicle.estado === 'DISPONIBLE' ? 'active' : 'inactive'}`}>
+                    {vehicle.estado === 'DISPONIBLE' ? 'Disponible' : vehicle.estado === 'ALQUILADO' ? 'Alquilado' : 'Mantenimiento'}
+                  </div>
+                )}
+                {!vehicle.activo && (
+                  <div className="status-badge inactivo">Inactivo</div>
+                )}
               </div>
             </div>
           </div>
@@ -107,6 +115,33 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
               </div>
             </div>
           )}
+          {onChangeActivo && (
+            <div className="modal-note" style={{ marginTop: 16 }}>
+              <div style={{ marginBottom: 8, fontWeight: 600, color: '#374151' }}>Activación</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => onChangeActivo(vehicle.id, true)}
+                  className="btn-secondary"
+                  style={{
+                    borderColor: vehicle.activo ? '#111827' : undefined,
+                    background: vehicle.activo ? '#111827' : undefined,
+                    color: vehicle.activo ? '#fff' : undefined,
+                  }}
+                >Activo</button>
+                <button
+                  type="button"
+                  onClick={() => onChangeActivo(vehicle.id, false)}
+                  className="btn-secondary"
+                  style={{
+                    borderColor: !vehicle.activo ? '#111827' : undefined,
+                    background: !vehicle.activo ? '#111827' : undefined,
+                    color: !vehicle.activo ? '#fff' : undefined,
+                  }}
+                >Inactivo</button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="modal-footer">
@@ -115,7 +150,7 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
             <button className="btn-primary" onClick={() => onEdit(vehicle)}>Editar</button>
           )}
           {onDelete && (
-            <button className="btn-danger" onClick={handleDelete}>Eliminar</button>
+            <button className="btn-danger" onClick={handleDelete}>{vehicle.activo ? 'Desactivar' : 'Eliminar'}</button>
           )}
         </div>
       </div>
