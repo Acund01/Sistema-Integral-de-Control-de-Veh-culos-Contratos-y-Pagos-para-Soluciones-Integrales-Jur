@@ -72,6 +72,10 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
               <div className="detail-value">{vehicle.combustible ? prettyFuel(vehicle.combustible) : '—'}</div>
             </div>
             <div className="detail-row">
+              <div className="detail-label">Descripción Adicional</div>
+              <div className="detail-value">{vehicle.descripcion || '—'}</div>
+            </div>
+            <div className="detail-row">
               <div className="detail-label">Creado</div>
               <div className="detail-value">{vehicle.creadoEn ? new Date(vehicle.creadoEn).toLocaleString() : '—'}</div>
             </div>
