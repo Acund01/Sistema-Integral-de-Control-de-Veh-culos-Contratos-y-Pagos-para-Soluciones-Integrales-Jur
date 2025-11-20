@@ -54,14 +54,28 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
 
   const handleDelete = async () => {
     if (!onDelete) return;
-    if (!confirm(`¿Desactivar cliente "${displayName}"? Podrás reactivarlo luego.`)) return;
+    if (!confirm(`¿Eliminar definitivamente al cliente "${displayName}"? Esta acción no se puede deshacer.`)) return;
     try {
       await clienteService.delete(fullClient.id);
-      alert('Cliente desactivado');
+      alert('Cliente eliminado');
       onDelete(fullClient.id);
       onClose();
     } catch (e) {
-      alert(`Error al desactivar: ${e instanceof Error ? e.message : 'Error desconocido'}`);
+      alert(`Error al eliminar: ${e instanceof Error ? e.message : 'Error desconocido'}`);
+    }
+  };
+
+  const handleChangeStatus = async () => {
+    if (!onChangeStatus) return;
+    const newStatus = !fullClient.activo;
+    const action = newStatus ? 'activar' : 'inactivar';
+    if (!confirm(`¿Está seguro de ${action} a "${displayName}"?`)) return;
+    try {
+      await clienteService.setActivo(fullClient.id, newStatus);
+      onChangeStatus(fullClient.id, newStatus);
+      onClose();
+    } catch (e) {
+      alert(`Error al ${action}: ${e instanceof Error ? e.message : 'Error desconocido'}`);
     }
   };
 
@@ -137,41 +151,18 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
             )}
           </div>
 
-          {onChangeStatus && (
-            <div className="modal-note" style={{ marginTop: 12 }}>
-              <div style={{ marginBottom: 8, fontWeight: 600, color: '#374151' }}>Cambiar estado</div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={() => onChangeStatus(client.id, true)}
-                  className={"btn-secondary"}
-                  style={{
-                    borderColor: client.activo ? '#111827' : undefined,
-                    background: client.activo ? '#111827' : undefined,
-                    color: client.activo ? '#fff' : undefined,
-                  }}
-                >
-                  Activo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onChangeStatus(client.id, false)}
-                  className={"btn-secondary"}
-                  style={{
-                    borderColor: !client.activo ? '#111827' : undefined,
-                    background: !client.activo ? '#111827' : undefined,
-                    color: !client.activo ? '#fff' : undefined,
-                  }}
-                >
-                  Inactivo
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>Cerrar</button>
+          {onChangeStatus && (
+            <button 
+              className={fullClient.activo ? "btn-warning" : "btn-success"} 
+              onClick={handleChangeStatus}
+            >
+              {fullClient.activo ? 'Inactivar' : 'Activar'}
+            </button>
+          )}
           {onEdit && (
             <button className="btn-primary" onClick={() => onEdit(fullClient)}>Editar</button>
           )}

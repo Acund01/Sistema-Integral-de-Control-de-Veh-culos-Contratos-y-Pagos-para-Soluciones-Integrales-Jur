@@ -125,14 +125,14 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate, onEditC
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Desactivar este cliente? (Se puede restaurar luego)')) return;
+    if (!confirm('¿Eliminar definitivamente este cliente? Esta acción no se puede deshacer.')) return;
     try {
-      await clienteService.delete(id);
-      alert('Cliente desactivado');
+      await clienteService.purge(id);
+      alert('Cliente eliminado definitivamente');
       await loadClients();
     } catch (err) {
-      console.error('Error al desactivar cliente:', err);
-      alert(`Error al desactivar cliente: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+      console.error('Error al eliminar cliente:', err);
+      alert(`Error al eliminar cliente: ${err instanceof Error ? err.message : 'Error desconocido'}`);
     }
   };
 

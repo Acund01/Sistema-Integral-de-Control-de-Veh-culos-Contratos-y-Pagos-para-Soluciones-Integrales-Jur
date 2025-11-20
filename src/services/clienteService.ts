@@ -168,11 +168,11 @@ class ClienteService {
   }
 
   /**
-   * DELETE definitivo /api/clientes/{id}/permanente - Elimina físicamente el cliente.
+   * DELETE definitivo /api/clientes/permanente/{id} - Elimina físicamente el cliente.
    * Requiere que el backend exponga este endpoint. Si no existe, retornará error.
    */
   async purge(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/${id}/permanente`, { method: 'DELETE' });
+    const response = await fetch(`${API_BASE_URL}/permanente/${id}`, { method: 'DELETE' });
     if (!response.ok) {
       throw new Error(`Error al eliminar definitivamente cliente ${id}: ${response.status} ${response.statusText}`);
     }

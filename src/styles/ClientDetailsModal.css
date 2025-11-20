@@ -64,8 +64,8 @@
   background: #e5e7eb;
   color: #374151;
 }
-.status-badge.active { background: #dcfce7; color: #166534; }
-.status-badge.inactive { background: #fee2e2; color: #991b1b; }
+.status-badge.activo { background: #dcfce7; color: #166534; }
+.status-badge.inactivo { background: #fee2e2; color: #991b1b; }
 
 .modal-close {
   border: none;
@@ -110,7 +110,7 @@
   border-top: 1px solid #eef2f7;
 }
 
-.btn-primary, .btn-secondary, .btn-danger {
+.btn-primary, .btn-secondary, .btn-danger, .btn-warning, .btn-success {
   padding: 8px 14px;
   border-radius: 10px;
   border: 1px solid transparent;
@@ -123,6 +123,10 @@
 .btn-primary:hover { background: #0b1220; }
 .btn-danger { background: #ef4444; color: #fff; }
 .btn-danger:hover { background: #dc2626; }
+.btn-warning { background: #f59e0b; color: #fff; }
+.btn-warning:hover { background: #d97706; }
+.btn-success { background: #10b981; color: #fff; }
+.btn-success:hover { background: #059669; }
 
 @media (max-width: 640px) {
   .details-grid { grid-template-columns: 1fr; }
