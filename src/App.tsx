@@ -14,9 +14,23 @@ import './App.css';
 function App() {
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [user, setUser] = useState<User | null>(null);
+  // Estado para edición de cliente
+  const [editingClientId, setEditingClientId] = useState<string | undefined>(undefined);
+  const [editingClientInitialData, setEditingClientInitialData] = useState<any | undefined>(undefined);
 
   const handleMenuClick = (menuId: string) => {
     setActiveMenu(menuId);
+  };
+
+  const startEditClient = (id: string, initialData: any) => {
+    setEditingClientId(id);
+    setEditingClientInitialData(initialData);
+    setActiveMenu('register-client');
+  };
+
+  const clearEditClient = () => {
+    setEditingClientId(undefined);
+    setEditingClientInitialData(undefined);
   };
 
   const handleLogin = (username: string, password: string) => {
@@ -53,10 +67,22 @@ function App() {
     <Dashboard onNavigate={(menuId: string) => setActiveMenu(menuId)} />
   )}
   {activeMenu === 'clientes' && (
-    <ClientManagement onNavigate={(menuId: string) => setActiveMenu(menuId)} />
+    <ClientManagement 
+      onNavigate={(menuId: string) => setActiveMenu(menuId)}
+      onEditClient={startEditClient}
+    />
   )}
   {activeMenu === 'register-client' && (
-    <RegisterClient onNavigate={(menuId: string) => setActiveMenu(menuId)} />
+    <RegisterClient 
+      onNavigate={(menuId: string) => {
+        setActiveMenu(menuId);
+        if (menuId !== 'register-client') {
+          clearEditClient();
+        }
+      }}
+      clientId={editingClientId}
+      initialData={editingClientInitialData}
+    />
   )}
           {activeMenu === 'vehiculos' && (
             <VehicleManagement />

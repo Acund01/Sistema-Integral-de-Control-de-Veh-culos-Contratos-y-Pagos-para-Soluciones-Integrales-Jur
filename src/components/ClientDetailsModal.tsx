@@ -28,17 +28,23 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
     const fetchFull = async () => {
       try {
         setLoadingExtra(true);
-        const fresh = await clienteService.findById(client.id);
+        let fresh: ClienteUnion;
+        if (client.tipoCliente === 'NATURAL') {
+          fresh = await clienteService.findNaturalById(client.id) as ClienteUnion;
+        } else {
+          fresh = await clienteService.findEmpresaById(client.id) as ClienteUnion;
+        }
         if (!cancelled) setFullClient(fresh);
-      } catch {
-        // si falla, mantenemos datos existentes
+      } catch (e) {
+        // mantener datos existentes si falla
+        console.warn('No se pudo cargar info completa del cliente', e);
       } finally {
         if (!cancelled) setLoadingExtra(false);
       }
     };
     fetchFull();
     return () => { cancelled = true; };
-  }, [client.id]);
+  }, [client.id, client.tipoCliente]);
 
   const displayName = useMemo(() => (
     fullClient.tipoCliente === 'NATURAL'
@@ -85,24 +91,7 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
               <div className="detail-label">Dirección</div>
               <div className="detail-value">{fullClient.direccion || '—'}</div>
             </div>
-            {(fullClient as any).contactoEmergenciaNombre && (
-              <div className="detail-row">
-                <div className="detail-label">Contacto Emergencia</div>
-                <div className="detail-value">{(fullClient as any).contactoEmergenciaNombre}</div>
-              </div>
-            )}
-            {(fullClient as any).contactoEmergenciaTelefono && (
-              <div className="detail-row">
-                <div className="detail-label">Teléfono Emergencia</div>
-                <div className="detail-value">{(fullClient as any).contactoEmergenciaTelefono}</div>
-              </div>
-            )}
-            {(fullClient as any).notas && (
-              <div className="detail-row">
-                <div className="detail-label">Notas</div>
-                <div className="detail-value">{(fullClient as any).notas}</div>
-              </div>
-            )}
+            {/* Notas eliminadas */}
             <div className="detail-row">
               <div className="detail-label">ID</div>
               <div className="detail-value monospace">{fullClient.id}</div>

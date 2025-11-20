@@ -51,7 +51,7 @@ interface RegisterClientProps {
 }
 
 const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient, clientId, initialData, onUpdateClient }) => {
-  const [clientType, setClientType] = useState<'natural' | 'company'>('natural');
+  const [clientType, setClientType] = useState<'natural' | 'company'>(initialData?.razonSocial ? 'company' : 'natural');
 
   // Datos del formulario
   interface FormData {
@@ -63,9 +63,7 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
     telefono?: string;
     direccion?: string;
     ciudad?: string;
-    contactoEmergenciaNombre?: string;
-    contactoEmergenciaTelefono?: string;
-    notas?: string;
+    // notas eliminadas
     razonSocial?: string;
     ruc?: string;
     giroComercial?: string;
@@ -89,9 +87,7 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
     telefono: initialData?.telefono ?? '',
     direccion: initialData?.direccion ?? '',
     ciudad: initialData?.ciudad ?? '',
-    contactoEmergenciaNombre: initialData?.contactoEmergenciaNombre ?? '',
-    contactoEmergenciaTelefono: initialData?.contactoEmergenciaTelefono ?? '',
-    notas: initialData?.notas ?? '',
+    // notas fuera
     // Persona jurídica
     razonSocial: initialData?.razonSocial ?? '',
     ruc: initialData?.ruc ?? '',
@@ -184,9 +180,7 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
           correo: form.correo ?? '',
           telefono: form.telefono ?? '',
           direccion: form.direccion ?? '',
-          contactoEmergenciaNombre: form.contactoEmergenciaNombre || undefined,
-          contactoEmergenciaTelefono: form.contactoEmergenciaTelefono || undefined,
-          notas: form.notas || undefined,
+          // notas removidas
         };
         if (clientId) {
           await clienteService.updateNatural(clientId, dto);
@@ -211,9 +205,7 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
             correo: form.representanteCorreo ?? '',
             telefono: form.representanteTelefono ?? '',
           },
-          contactoEmergenciaNombre: form.contactoEmergenciaNombre || undefined,
-          contactoEmergenciaTelefono: form.contactoEmergenciaTelefono || undefined,
-          notas: form.notas || undefined,
+          // notas removidas
         };
         if (clientId) {
           await clienteService.updateEmpresa(clientId, dto);
@@ -248,12 +240,19 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
     }
   };
 
+  // Ajustar tipo si cambia initialData por edición tardía
+  useEffect(() => {
+    if (clientId) {
+      setClientType(initialData?.razonSocial ? 'company' : 'natural');
+    }
+  }, [clientId, initialData]);
+
   return (
     <div className="register-client page">
       <div className="page-header">
         <div className="header-content">
-          <h1 className="page-title">Registrar Nuevo Cliente</h1>
-          <p className="page-subtitle">Completa la información del cliente para agregarlo al sistema</p>
+          <h1 className="page-title">{clientId ? 'Editar Cliente' : 'Registrar Nuevo Cliente'}</h1>
+          <p className="page-subtitle">{clientId ? 'Actualiza la información y guarda los cambios' : 'Completa la información del cliente para agregarlo al sistema'}</p>
         </div>
       </div>
 
@@ -274,6 +273,7 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
               name="clientType"
               value={clientType}
               onChange={(e) => setClientType(e.target.value as 'natural' | 'company')}
+              disabled={!!clientId} // no permitir cambiar tipo en edición
             >
               <option value="natural">Persona Natural</option>
               <option value="company">Persona Jurídica (Empresa)</option>
@@ -353,41 +353,7 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
               </div>
             </section>
 
-            <section className="form-section">
-              <h3 className="section-title">📞 Contacto de Emergencia</h3>
-              <div className="field-row">
-                <div className="field-col">
-                  <label>Nombre del Contacto</label>
-                  <input
-                    name="contactoEmergenciaNombre"
-                    value={form.contactoEmergenciaNombre}
-                    onChange={handleChange}
-                    placeholder="María García"
-                  />
-                </div>
-                <div className="field-col">
-                  <label>Teléfono de Emergencia</label>
-                  <input
-                    name="contactoEmergenciaTelefono"
-                    value={form.contactoEmergenciaTelefono}
-                    onChange={handleChange}
-                    placeholder="+51 1 987-6543"
-                  />
-                </div>
-              </div>
-
-              <div className="field-row">
-                <div className="field-col-full">
-                  <label>Notas Adicionales</label>
-                  <textarea
-                    name="notas"
-                    value={form.notas}
-                    onChange={handleChange}
-                    placeholder="Información adicional sobre el cliente..."
-                  />
-                </div>
-              </div>
-            </section>
+            {/* Sección de notas eliminada */}
           </>
         ) : (
           <>
@@ -535,36 +501,7 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
               </div>
             </section>
 
-            <section className="form-section">
-              <h3 className="section-title">📞 Contacto de Emergencia</h3>
-              <div className="field-row">
-                <div className="field-col">
-                  <label>Nombre del Contacto</label>
-                  <input
-                    name="contactoEmergenciaNombre"
-                    value={form.contactoEmergenciaNombre}
-                    onChange={handleChange}
-                    placeholder="María García"
-                  />
-                </div>
-                <div className="field-col">
-                  <label>Teléfono de Emergencia</label>
-                  <input
-                    name="contactoEmergenciaTelefono"
-                    value={form.contactoEmergenciaTelefono}
-                    onChange={handleChange}
-                    placeholder="+51 1 987-6543"
-                  />
-                </div>
-              </div>
-
-              <div className="field-row">
-                <div className="field-col-full">
-                  <label>Notas Adicionales</label>
-                  <textarea name="notas" value={form.notas} onChange={handleChange} placeholder="Información adicional..." />
-                </div>
-              </div>
-            </section>
+            {/* Sección de notas eliminada */}
           </>
         )}
 
@@ -572,7 +509,7 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
           <button type="button" className="btn-secondary" onClick={handleCancel}>
             Cancelar
           </button>
-          <button type="submit" className="btn-primary">Registrar Cliente</button>
+          <button type="submit" className="btn-primary">{clientId ? 'Guardar Cambios' : 'Registrar Cliente'}</button>
         </div>
       </form>
     </div>

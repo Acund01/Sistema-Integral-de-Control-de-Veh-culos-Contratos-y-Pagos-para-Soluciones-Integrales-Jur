@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import type { ContratoResponseDto } from '../types/contract';
 import '../styles/ClientDetailsModal.css';
-import { comprobanteService, ComprobanteRequestDto } from '../services/comprobanteService';
+import { comprobanteService } from '../services/comprobanteService';
+import type { ComprobanteRequestDto } from '../services/comprobanteService';
 import { activityService } from '../services/activityService';
 import { contratoService } from '../services/contratoService';
 

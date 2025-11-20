@@ -8,9 +8,10 @@ import { clienteService } from '../services/clienteService';
 
 interface ClientManagementProps {
   onNavigate?: (menuId: string) => void;
+  onEditClient?: (id: string, initialData: any) => void;
 }
 
-const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate }) => {
+const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate, onEditClient }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClient, setSelectedClient] = useState<ClienteUnion | null>(null);
   const [clients, setClients] = useState<ClienteUnion[]>([]);
@@ -79,8 +80,48 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate }) => {
 
   const handleEdit = (client: ClienteUnion) => {
     // TODO: Implementar edición con navegación a RegisterClient pasando el cliente
-    console.log('Editar cliente:', client);
-    onNavigate?.('register-client');
+    // Mapear cliente existente a initialData esperado por RegisterClient
+    if (onEditClient) {
+      if (client.tipoCliente === 'NATURAL') {
+        const naturalInitial = {
+          nombres: (client as any).nombre,
+          apellidos: (client as any).apellido,
+          tipoDocumento: ((client as any).tipoDocumento || '').toLowerCase(),
+          numeroDocumento: (client as any).numeroDocumento,
+          correo: client.correo,
+          telefono: client.telefono,
+          direccion: client.direccion,
+          contactoEmergenciaNombre: (client as any).contactoEmergenciaNombre,
+          contactoEmergenciaTelefono: (client as any).contactoEmergenciaTelefono,
+          notas: (client as any).notas,
+        };
+        onEditClient(client.id, naturalInitial);
+      } else {
+        const empresa = client as any;
+        const empresaInitial = {
+          razonSocial: empresa.razonSocial,
+          ruc: empresa.ruc,
+          giroComercial: empresa.giroComercial,
+          direccionFiscal: empresa.direccionFiscal,
+          correo: empresa.correo,
+          telefono: empresa.telefono,
+          direccion: empresa.direccion,
+          representanteNombres: empresa.representante?.nombre,
+          representanteApellidos: empresa.representante?.apellido,
+          representanteTipoDocumento: (empresa.representante?.tipoDocumento || '').toLowerCase(),
+          representanteNumeroDocumento: empresa.representante?.numeroDocumento,
+          representanteCargo: empresa.representante?.cargo,
+          representanteCorreo: empresa.representante?.correo,
+          representanteTelefono: empresa.representante?.telefono,
+          contactoEmergenciaNombre: empresa.contactoEmergenciaNombre,
+          contactoEmergenciaTelefono: empresa.contactoEmergenciaTelefono,
+          notas: empresa.notas,
+        };
+        onEditClient(client.id, empresaInitial);
+      }
+    } else {
+      onNavigate?.('register-client');
+    }
   };
 
   const handleDelete = async (id: string) => {

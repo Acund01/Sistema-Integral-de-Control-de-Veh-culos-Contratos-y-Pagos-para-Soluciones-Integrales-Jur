@@ -62,6 +62,28 @@ class ClienteService {
   }
 
   /**
+   * GET /api/clientes/naturales/{id} - Obtener cliente natural con todos sus campos
+   */
+  async findNaturalById(id: string): Promise<ClienteNatural> {
+    const response = await fetch(`${API_BASE_URL}/naturales/${id}`);
+    if (!response.ok) {
+      throw new Error(`Error al obtener cliente natural ${id}: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * GET /api/clientes/empresas/{id} - Obtener cliente empresa con todos sus campos
+   */
+  async findEmpresaById(id: string): Promise<ClienteEmpresa> {
+    const response = await fetch(`${API_BASE_URL}/empresas/${id}`);
+    if (!response.ok) {
+      throw new Error(`Error al obtener cliente empresa ${id}: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
    * POST /api/clientes/naturales - Crear cliente natural
    */
   async createNatural(dto: ClienteNaturalDto): Promise<ClienteNatural> {
