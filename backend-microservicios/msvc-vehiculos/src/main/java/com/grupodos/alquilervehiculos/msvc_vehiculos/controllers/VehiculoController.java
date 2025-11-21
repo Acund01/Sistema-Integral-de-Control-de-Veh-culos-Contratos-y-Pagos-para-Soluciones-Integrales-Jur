@@ -89,6 +89,18 @@ public class VehiculoController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<Void> restaurar(@PathVariable UUID id) {
+        vehiculoService.restaurarVehiculo(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/permanente/{id}")
+    public ResponseEntity<Void> borrar(@PathVariable UUID id) {
+        vehiculoService.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/contratos/{id}")
     public ResponseEntity<VehiculoContratoDto> obtenerParaContrato(@PathVariable UUID id) {
         log.debug("Solicitud para obtener vehículo para contrato con ID: {}", id);
