@@ -17,19 +17,14 @@ interface CreateContractProps {
   vehicles?: Vehiculo[];
 }
 
+
+
 type InsuranceKey = '' | 'basico' | 'completo';
 
 const INSURANCE_LABEL: Record<InsuranceKey, string> = {
   '': 'Seleccionar seguro',
   'basico': 'Básico',
   'completo': 'Completo',
-};
-
-// Costo de seguro por día
-const INSURANCE_DAILY_RATE: Record<InsuranceKey, number> = {
-  '': 0,
-  'basico': 15,
-  'completo': 30,
 };
 
 const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, contractToEdit, clients: clientsProp = [], vehicles: vehiclesProp = [] }) => {
@@ -92,19 +87,18 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
     const e = parseDate(endDate);
     if (!s || !e) return 0;
     const ms = e.getTime() - s.getTime();
-    if (ms <= 0) return 0;
-    // Exclusivo de fecha fin (1..15 => 14)
-    return Math.ceil(ms / (1000 * 60 * 60 * 24));
+    if (ms < 0) return 0;
+    // Inclusivo: ambas fechas cuentan (21/11 al 30/11 = 10 días)
+    return Math.ceil(ms / (1000 * 60 * 60 * 24)) + 1;
   }, [startDate, endDate]);
 
   const numDaily = typeof dailyRate === 'number' ? dailyRate : 0;
-  const insuranceDaily = INSURANCE_DAILY_RATE[insurance] || 0;
-  const insuranceTotal = insuranceDaily * days; // costo del seguro según días
-  const depositAmount = typeof deposit === 'number' ? deposit : 0; // depósito separado, no se grava
+  const depositAmount = typeof deposit === 'number' ? deposit : 0;
 
   const subtotal = days * numDaily;
-  const taxes = (subtotal + insuranceTotal) * 0.18; // impuestos sobre tarifa + seguro
-  const total = subtotal + insuranceTotal + taxes + depositAmount; // depósito se suma pero no se grava
+  const baseForTax = subtotal + depositAmount; // subtotal + depósito
+  const taxes = baseForTax * 0.18; // IGV sobre (subtotal + depósito)
+  const total = baseForTax + taxes; // total = subtotal + depósito + IGV
 
   const displayClientName = (c: ClienteUnion) => c.tipoCliente === 'NATURAL'
     ? `${c.nombre} ${c.apellido}`
@@ -350,10 +344,6 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
             <div className="summary-row">
               <span>Subtotal (sin impuestos):</span>
               <span>S/. {subtotal.toLocaleString()}</span>
-            </div>
-            <div className="summary-row">
-              <span>Seguro ({insuranceDaily ? `S/. ${insuranceDaily}/día` : '—'}):</span>
-              <span>S/. {insuranceTotal.toLocaleString()}</span>
             </div>
             <div className="summary-row">
               <span>Depósito:</span>

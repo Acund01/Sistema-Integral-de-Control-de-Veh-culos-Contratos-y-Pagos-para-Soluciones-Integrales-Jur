@@ -54,32 +54,35 @@ const ContractCard: React.FC<ContractCardProps> = ({ contract, onViewDetails, on
       const subtotal = days * daily;
       const obs = contract.observaciones || '';
 
-      // Intentar extraer depósito numérico
+      // Extraer depósito numérico
       let deposit = 0;
       const depMatch = obs.match(/Depósito:\s*S\/.?\s*(\d+[,.]?\d*)/i);
       if (depMatch) {
         deposit = Number(depMatch[1].replace(',', '.')) || 0;
       }
 
-      // Si no hay depósito, usar seguro por día (lógica original)
-      let insuranceTotal = 0;
-      if (deposit > 0) {
-        insuranceTotal = deposit; // Ajuste solicitado: tratar depósito como bloque adicional
-      } else {
-        const insuranceBasic = /Seguro:\s*Básico/i.test(obs);
-        const insuranceFull = /Seguro:\s*Completo/i.test(obs);
-        const rate = insuranceBasic ? 15 : (insuranceFull ? 30 : 0);
-        insuranceTotal = rate * days;
-      }
-
-      const taxableBase = subtotal + insuranceTotal;
-      const taxes = taxableBase * 0.18;
-      const total = taxableBase + taxes;
+      // Calcular total: (subtotal + depósito) + IGV
+      const baseForTax = subtotal + deposit;
+      const taxes = baseForTax * 0.18;
+      const total = baseForTax + taxes;
       return total;
     } catch {
       return Number(contract.montoTotal || 0);
     }
   }, [contract]);
+
+  // Calcular días restantes hasta la fecha de fin
+  const daysRemaining = useMemo(() => {
+    try {
+      const endDate = new Date(contract.fechaFin);
+      const todayDate = new Date();
+      const diff = endDate.getTime() - todayDate.getTime();
+      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      return days > 0 ? days : 0;
+    } catch {
+      return 0;
+    }
+  }, [contract.fechaFin]);
 
   return (
     <div className="contract-card">
@@ -131,7 +134,7 @@ const ContractCard: React.FC<ContractCardProps> = ({ contract, onViewDetails, on
             </span>
             <div className="detail-content-small">
               <span className="detail-label-small">Período</span>
-              <span className="detail-value-small">{contract.diasTotales} días</span>
+              <span className="detail-value-small">{contract.diasTotales} días {daysRemaining > 0 ? `(${daysRemaining} restantes)` : '(finalizado)'}</span>
             </div>
           </div>
 
