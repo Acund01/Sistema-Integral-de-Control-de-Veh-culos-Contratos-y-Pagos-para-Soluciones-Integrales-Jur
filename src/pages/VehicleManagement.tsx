@@ -189,10 +189,14 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
   };
 
   const handleDeleteVehicle = (vehicleId: string) => {
+    const vehicle = items.find(v => v.id === vehicleId);
+    const vehicleName = vehicle ? `${vehicle.modelo?.marca?.nombre || ''} ${vehicle.modelo?.nombre || ''}`.trim() : 'este vehículo';
+    const isActive = vehicle?.activo ?? true;
+    
     setConfirmDialog({
       isOpen: true,
-      title: 'Eliminar vehículo',
-      message: '¿Eliminar definitivamente este vehículo? Esta acción no se puede deshacer.',
+      title: isActive ? 'Desactivar vehículo' : 'Eliminar vehículo',
+      message: `¿${isActive ? 'Desactivar' : 'Eliminar definitivamente'} el vehículo ${vehicleName}? ${isActive ? '' : 'Esta acción no se puede deshacer.'}`,
       type: 'danger',
       onConfirm: () => {
         if (onDeleteVehicle) {

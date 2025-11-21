@@ -52,10 +52,11 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
     if (!onChangeActivo) return;
     const newStatus = !vehicle.activo;
     const action = newStatus ? 'activar' : 'inactivar';
+    const vehicleName = `${vehicle.modelo?.marca?.nombre || ''} ${vehicle.modelo?.nombre || ''}`.trim() || 'este vehículo';
     setConfirmDialog({
       isOpen: true,
       title: `${newStatus ? 'Activar' : 'Inactivar'} vehículo`,
-      message: `¿Está seguro de ${action} este vehículo?`,
+      message: `¿${newStatus ? 'Activar' : 'Desactivar'} el vehículo ${vehicleName}?`,
       type: 'warning',
       onConfirm: () => {
         onChangeActivo(vehicle.id, newStatus);

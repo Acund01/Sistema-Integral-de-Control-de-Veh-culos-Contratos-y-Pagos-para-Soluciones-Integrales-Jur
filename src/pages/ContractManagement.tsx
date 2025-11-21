@@ -43,17 +43,29 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
     const load = async () => {
       try {
         setLoading(true);
-  const data = await contratoService.findAll();
-  if (!cancelled) setItems(Array.isArray(data) ? data : []);
+        setError(null);
+        const data = await contratoService.findAll();
+        if (!cancelled) {
+          setItems(Array.isArray(data) ? data : []);
+        }
       } catch (err) {
-        if (!cancelled) setError((err as Error)?.message || 'Error al cargar contratos');
+        if (!cancelled) {
+          const errorMsg = err instanceof Error ? err.message : 'Error desconocido al cargar contratos';
+          setError(errorMsg);
+          console.error('Error cargando contratos:', err);
+          // Mantener los contratos existentes en caso de error
+          // No limpiar items para que se mantengan los datos previos
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-    load();
+    // Solo cargar si no hay props de contratos
+    if (!contracts || contracts.length === 0) {
+      load();
+    }
     return () => { cancelled = true; };
-  }, []);
+  }, [contracts]);
 
   // Cálculo de estadísticas dinámicas según contratos recibidos
   const stats: ContractStats = useMemo(() => {
@@ -112,20 +124,46 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
   };
 
   const handleViewDetails = (contract: ContratoResponseDto) => setSelectedContract(contract);
+  
   const handleDelete = (id: string) => {
-    if (onDeleteContract) return onDeleteContract(id);
-    contratoService.delete(id)
-      .then(() => setItems(prev => prev.filter(c => c.id !== id)))
-      .catch(err => {
-        setConfirmDialog({
-          isOpen: true,
-          title: 'Error',
-          message: err?.message || 'No se pudo eliminar el contrato',
-          type: 'danger',
-          onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
-        });
-      });
+    const contract = items.find(c => c.id === id);
+    const contractCode = contract?.codigoContrato || 'este contrato';
+    
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar contrato',
+      message: `¿Eliminar el contrato ${contractCode}?`,
+      type: 'danger',
+      onConfirm: () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        if (onDeleteContract) {
+          onDeleteContract(id);
+        } else {
+          contratoService.delete(id)
+            .then(() => {
+              setItems(prev => prev.filter(c => c.id !== id));
+              setConfirmDialog({
+                isOpen: true,
+                title: 'Éxito',
+                message: 'Contrato eliminado correctamente',
+                type: 'success',
+                onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+              });
+            })
+            .catch(err => {
+              setConfirmDialog({
+                isOpen: true,
+                title: 'Error',
+                message: err?.message || 'No se pudo eliminar el contrato',
+                type: 'danger',
+                onConfirm: () => setConfirmDialog(prev => ({ ...prev, isOpen: false })),
+              });
+            });
+        }
+      },
+    });
   };
+  
   const handleEdit = (contract: ContratoResponseDto) => onStartEditContract?.(contract);
 
   const handleFilters = () => {
@@ -231,19 +269,50 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
           <button className="btn-filters" onClick={handleStateFilter}>
             Estado
           </button>
-          <button className="btn-filters" onClick={() => {
-            setLoading(true);
-            contratoService.findAll()
-              .then(setItems)
-              .catch(err => setError((err as Error)?.message || 'Error al cargar contratos'))
-              .finally(() => setLoading(false));
+          <button className="btn-filters" onClick={async () => {
+            try {
+              setLoading(true);
+              setError(null);
+              const data = await contratoService.findAll();
+              setItems(Array.isArray(data) ? data : []);
+            } catch (err) {
+              const errorMsg = err instanceof Error ? err.message : 'Error al recargar contratos';
+              setError(errorMsg);
+              console.error('Error recargando contratos:', err);
+            } finally {
+              setLoading(false);
+            }
           }}>
             Refrescar
           </button>
         </div>
 
         {loading && <div className="no-results"><p>Cargando contratos…</p></div>}
-        {error && <div className="no-results"><p style={{ color: 'crimson' }}>{error}</p></div>}
+        {error && !loading && (
+          <div className="no-results">
+            <p style={{ color: 'crimson' }}>{error}</p>
+            <button 
+              className="btn-primary" 
+              style={{ marginTop: '1rem' }}
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  setError(null);
+                  const data = await contratoService.findAll();
+                  setItems(Array.isArray(data) ? data : []);
+                } catch (err) {
+                  const errorMsg = err instanceof Error ? err.message : 'Error al recargar contratos';
+                  setError(errorMsg);
+                  console.error('Error recargando contratos:', err);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
         <div className="contracts-list">
           {filteredContracts.map((contract) => (
             <ContractCard
@@ -256,7 +325,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
           ))}
         </div>
 
-        {filteredContracts.length === 0 && (
+        {filteredContracts.length === 0 && !loading && !error && (
           <div className="no-results">
             <p>No se encontraron contratos que coincidan con la búsqueda</p>
           </div>
