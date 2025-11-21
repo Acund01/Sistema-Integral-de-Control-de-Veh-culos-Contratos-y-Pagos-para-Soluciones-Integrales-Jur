@@ -97,9 +97,11 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
   // Cálculo de estadísticas a partir del inventario actual
   const stats: VehicleStats = useMemo(() => {
     const total = items.length;
-    const available = items.filter(v => v.estado === 'DISPONIBLE').length;
+    // Solo contar como disponibles los vehículos que están activos Y en estado disponible
+    const available = items.filter(v => v.activo && v.estado === 'DISPONIBLE').length;
     const rented = items.filter(v => v.estado === 'ALQUILADO').length;
-    const maintenance = items.filter(v => v.estado === 'MANTENIMIENTO').length;
+    // Los vehículos inactivos o en mantenimiento se cuentan como mantenimiento
+    const maintenance = items.filter(v => !v.activo || v.estado === 'MANTENIMIENTO').length;
     return { total, available, rented, maintenance };
   }, [items]);
 
