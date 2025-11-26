@@ -32,7 +32,7 @@ public class SecurityConfig {
 
         return http.authorizeExchange(authz -> {
                     authz.pathMatchers("/authorized", "/logout").permitAll()
-                            .pathMatchers("api/**").permitAll() //Aun por modificar cuando se tenga la autenticacion implementada
+                            .pathMatchers("/api/**").permitAll() //Aun por modificar cuando se tenga la autenticacion implementada
                             //.pathMatchers(HttpMethod.GET, "/api/clientes", "/api/vehiculos").permitAll()
                             //.pathMatchers(HttpMethod.POST, "/api/clientes").hasAnyRole("ADMIN", "USER")
                             //.pathMatchers("/api/contratos/**", "/api/clientes/**").hasRole("ADMIN")
