@@ -1,6 +1,6 @@
-// Fuente de la URL base de reportes. Usar variable de entorno VITE_REPORTES_BASE_URL definida en un archivo .env
-// Ejemplo en .env.local: VITE_REPORTES_BASE_URL=http://localhost:8085/api/reportes
-const API_BASE_URL = (import.meta.env.VITE_REPORTES_BASE_URL || '/api/reportes').trim();
+import api from '../api';
+
+const BASE_PATH = '/reportes';
 
 export type ReportPayload = Record<string, unknown> | FormData | undefined;
 
@@ -11,24 +11,28 @@ function filenameFromContentDisposition(header?: string | null) {
 }
 
 export async function downloadReportExcel(path: string, payload?: ReportPayload) {
-  const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
-  const opts: RequestInit = {
-    method: payload ? 'POST' : 'GET',
+  const url = `${BASE_PATH}${path.startsWith('/') ? path : `/${path}`}`;
+  const config: any = {
+    responseType: 'blob',
     headers: { Accept: 'application/octet-stream' }
   };
-  if (payload && !(payload instanceof FormData)) {
-    (opts.headers as Record<string,string>)['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(payload);
-  } else if (payload instanceof FormData) {
-    opts.body = payload;
+  
+  let res;
+  try {
+    if (payload && !(payload instanceof FormData)) {
+      res = await api.post(url, payload, config);
+    } else if (payload instanceof FormData) {
+      res = await api.post(url, payload, config);
+    } else {
+      res = await api.get(url, config);
+    }
+  } catch (error: any) {
+    const text = error.response ? await error.response.data.text() : error.message;
+    throw new Error(`Error al generar reporte: ${error.response?.status} ${error.response?.statusText} ${text}`);
   }
-  const res = await fetch(url, opts);
-  if (!res.ok) {
-    const text = await res.text().catch(()=> '');
-    throw new Error(`Error al generar reporte: ${res.status} ${res.statusText} ${text}`);
-  }
-  const blob = await res.blob();
-  const cd = res.headers.get('Content-Disposition');
+
+  const blob = res.data;
+  const cd = res.headers['content-disposition'];
   const filename = filenameFromContentDisposition(cd) || `reporte-${Date.now()}.xlsx`;
   const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -46,35 +50,40 @@ export async function downloadReportExcel(path: string, payload?: ReportPayload)
  */
 export async function generateReport(payload: { tipo: string; formato?: string; parametros?: Record<string, unknown>; periodo?: { inicio: string; fin: string } }) {
   // Este endpoint genérico NO existe en el controller actual, se deja para futura ampliación
-  const url = `${API_BASE_URL}/generar`; // placeholder
+  const url = `${BASE_PATH}/generar`; // placeholder
   const body = { tipo: payload.tipo, formato: payload.formato || 'xlsx', parametros: payload.parametros || {}, periodo: payload.periodo };
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json,application/octet-stream' },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Error al generar reporte: ${res.status} ${res.statusText} ${text}`);
+  
+  try {
+    const res = await api.post(url, body, {
+      headers: { Accept: 'application/json,application/octet-stream' },
+      responseType: 'blob' // We request blob to handle both cases, but might need to check content type
+    });
+    
+    const ct = res.headers['content-type'] || '';
+    if (ct.includes('application/octet-stream') || ct.includes('application/vnd')) {
+      // tratar como descarga directa
+      const blob = res.data;
+      const cd = res.headers['content-disposition'];
+      const filename = filenameFromContentDisposition(cd) || `reporte-${Date.now()}.xlsx`;
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+      return { filename };
+    } else {
+      // Si es JSON, axios lo parsea si responseType no fuera blob.
+      // Pero como pusimos blob, tenemos que leerlo.
+      const text = await res.data.text();
+      return JSON.parse(text);
+    }
+  } catch (error: any) {
+    const text = error.response ? await error.response.data.text() : error.message;
+    throw new Error(`Error al generar reporte: ${error.response?.status} ${error.response?.statusText} ${text}`);
   }
-  const ct = res.headers.get('Content-Type') || '';
-  if (ct.includes('application/octet-stream') || ct.includes('application/vnd')) {
-    // tratar como descarga directa
-    const blob = await res.blob();
-    const cd = res.headers.get('Content-Disposition');
-    const filename = filenameFromContentDisposition(cd) || `reporte-${Date.now()}.xlsx`;
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(blobUrl);
-    return { filename };
-  }
-  // asumir JSON metadatos
-  return res.json();
 }
 
 // === Endpoints reales según ReporteController ===
@@ -95,32 +104,29 @@ export async function generarIngresosMensualesExcel(anio: number) {
 
 // Datos JSON (si se necesitan mostrar antes de exportar)
 export async function datosPagos(fechaInicio: string, fechaFin: string) {
-  const res = await fetch(`${API_BASE_URL}/pagos/datos`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ fechaInicio, fechaFin }) });
-  if (!res.ok) throw new Error('Error datos pagos');
-  return res.json();
+  const res = await api.post(`${BASE_PATH}/pagos/datos`, { fechaInicio, fechaFin });
+  return res.data;
 }
 export async function datosUsoVehiculos(fechaInicio: string, fechaFin: string) {
-  const res = await fetch(`${API_BASE_URL}/uso-vehiculos/datos`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ fechaInicio, fechaFin }) });
-  if (!res.ok) throw new Error('Error datos uso vehiculos');
-  return res.json();
+  const res = await api.post(`${BASE_PATH}/uso-vehiculos/datos`, { fechaInicio, fechaFin });
+  return res.data;
 }
 export async function datosIngresosMensuales(anio: number) {
-  const res = await fetch(`${API_BASE_URL}/ingresos-mensuales/${anio}/datos`, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error('Error datos ingresos mensuales');
-  return res.json();
+  const res = await api.get(`${BASE_PATH}/ingresos-mensuales/${anio}/datos`);
+  return res.data;
 }
 
 export async function listGeneratedReports() {
-  const res = await fetch(`${API_BASE_URL}/generados`, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`Error al listar: ${res.status}`);
-  return res.json(); // [{id, tipo_reporte, nombre_archivo, fecha_generacion, formato, tamaño_bytes}]
+  const res = await api.get(`${BASE_PATH}/generados`);
+  return res.data; // [{id, tipo_reporte, nombre_archivo, fecha_generacion, formato, tamaño_bytes}]
 }
 
 export async function downloadGeneratedReport(id: string) {
-  const res = await fetch(`${API_BASE_URL}/generados/${id}/descargar`, { headers: { Accept: 'application/octet-stream' } });
-  if (!res.ok) throw new Error(`Error al descargar: ${res.status}`);
-  const blob = await res.blob();
-  const cd = res.headers.get('Content-Disposition');
+  const res = await api.get(`${BASE_PATH}/generados/${id}/descargar`, {
+    responseType: 'blob'
+  });
+  const blob = res.data;
+  const cd = res.headers['content-disposition'];
   const filename = (cd && /filename="?([^"]+)"?/.exec(cd)?.[1]) || `reporte-${id}.xlsx`;
   const urlBlob = URL.createObjectURL(blob);
   const a = document.createElement('a');

@@ -1,19 +1,17 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 import companyGif from '../assets/login.gif';
 
-
-interface LoginProps {
-  onLogin: (username: string, password: string) => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -22,10 +20,24 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       return;
     }
 
-    // Validar credenciales
-    if (username === 'admin' && password === 'admin123') {
-      onLogin(username, password);
-    } else {
+    try {
+      // Hacemos POST directo a la URL de autenticación
+      const response = await axios.post(import.meta.env.VITE_AUTH_URL, {
+        username,
+        password,
+      });
+
+      const { token, username: user, roles } = response.data;
+
+      // Guardar datos en localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('username', user);
+      localStorage.setItem('roles', JSON.stringify(roles));
+
+      // Redirigir al dashboard
+      navigate('/dashboard');
+    } catch (err) {
+      console.error(err);
       setError('Usuario o contraseña incorrectos');
     }
   };

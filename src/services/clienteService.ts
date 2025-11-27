@@ -1,3 +1,4 @@
+import api from '../api';
 import type {
   ClienteUnion,
   ClienteNatural,
@@ -8,8 +9,7 @@ import type {
   ClienteReporteDto
 } from '../types/client';
 
-// URL base del microservicio de clientes (usar proxy de Vite en dev)
-const API_BASE_URL = (import.meta as ImportMeta).env?.VITE_CLIENTES_BASE_URL ?? '/api/clientes';
+const BASE_PATH = '/clientes';
 
 /**
  * Servicio para consumir el API REST del microservicio de Clientes
@@ -21,161 +21,94 @@ class ClienteService {
    * GET /api/clientes - Listar todos los clientes
    */
   async findAll(): Promise<ClienteUnion[]> {
-    const response = await fetch(`${API_BASE_URL}`);
-    if (!response.ok) {
-      throw new Error(`Error al obtener clientes: ${response.statusText}`);
-    }
-    return response.json();
+    const response = await api.get(BASE_PATH);
+    return response.data;
   }
 
   /**
    * GET /api/clientes/activos - Listar clientes activos
    */
   async findAllActivos(): Promise<ClienteUnion[]> {
-    const response = await fetch(`${API_BASE_URL}/activos`);
-    if (!response.ok) {
-      throw new Error(`Error al obtener clientes activos: ${response.statusText}`);
-    }
-    return response.json();
+    const response = await api.get(`${BASE_PATH}/activos`);
+    return response.data;
   }
 
   /**
    * GET /api/clientes/inactivos - Listar clientes inactivos
    */
   async findAllInactivos(): Promise<ClienteUnion[]> {
-    const response = await fetch(`${API_BASE_URL}/inactivos`);
-    if (!response.ok) {
-      throw new Error(`Error al obtener clientes inactivos: ${response.statusText}`);
-    }
-    return response.json();
+    const response = await api.get(`${BASE_PATH}/inactivos`);
+    return response.data;
   }
 
   /**
    * GET /api/clientes/{id} - Buscar cliente por ID
    */
   async findById(id: string): Promise<ClienteUnion> {
-    const response = await fetch(`${API_BASE_URL}/${id}`);
-    if (!response.ok) {
-      throw new Error(`Error al obtener cliente ${id}: ${response.statusText}`);
-    }
-    return response.json();
+    const response = await api.get(`${BASE_PATH}/${id}`);
+    return response.data;
   }
 
   /**
    * GET /api/clientes/naturales/{id} - Obtener cliente natural con todos sus campos
    */
   async findNaturalById(id: string): Promise<ClienteNatural> {
-    const response = await fetch(`${API_BASE_URL}/naturales/${id}`);
-    if (!response.ok) {
-      throw new Error(`Error al obtener cliente natural ${id}: ${response.statusText}`);
-    }
-    return response.json();
+    const response = await api.get(`${BASE_PATH}/naturales/${id}`);
+    return response.data;
   }
 
   /**
    * GET /api/clientes/empresas/{id} - Obtener cliente empresa con todos sus campos
    */
   async findEmpresaById(id: string): Promise<ClienteEmpresa> {
-    const response = await fetch(`${API_BASE_URL}/empresas/${id}`);
-    if (!response.ok) {
-      throw new Error(`Error al obtener cliente empresa ${id}: ${response.statusText}`);
-    }
-    return response.json();
+    const response = await api.get(`${BASE_PATH}/empresas/${id}`);
+    return response.data;
   }
 
   /**
    * POST /api/clientes/naturales - Crear cliente natural
    */
   async createNatural(dto: ClienteNaturalDto): Promise<ClienteNatural> {
-    const response = await fetch(`${API_BASE_URL}/naturales`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(dto),
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error al crear cliente natural: ${errorText}`);
-    }
-    return response.json();
+    const response = await api.post(`${BASE_PATH}/naturales`, dto);
+    return response.data;
   }
 
   /**
    * PUT /api/clientes/naturales/{id} - Actualizar cliente natural
    */
   async updateNatural(id: string, dto: ClienteNaturalDto): Promise<ClienteNatural> {
-    const response = await fetch(`${API_BASE_URL}/naturales/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(dto),
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error al actualizar cliente natural: ${errorText}`);
-    }
-    return response.json();
+    const response = await api.put(`${BASE_PATH}/naturales/${id}`, dto);
+    return response.data;
   }
 
   /**
    * POST /api/clientes/empresas - Crear cliente empresa
    */
   async createEmpresa(dto: ClienteEmpresaDto): Promise<ClienteEmpresa> {
-    const response = await fetch(`${API_BASE_URL}/empresas`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(dto),
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error al crear cliente empresa: ${errorText}`);
-    }
-    return response.json();
+    const response = await api.post(`${BASE_PATH}/empresas`, dto);
+    return response.data;
   }
 
   /**
    * PUT /api/clientes/empresas/{id} - Actualizar cliente empresa
    */
   async updateEmpresa(id: string, dto: ClienteEmpresaDto): Promise<ClienteEmpresa> {
-    const response = await fetch(`${API_BASE_URL}/empresas/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(dto),
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error al actualizar cliente empresa: ${errorText}`);
-    }
-    return response.json();
+    const response = await api.put(`${BASE_PATH}/empresas/${id}`, dto);
+    return response.data;
   }
 
   /**
    * DELETE /api/clientes/{id} - Desactivar cliente (soft delete)
    */
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/${id}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) {
-      throw new Error(`Error al eliminar cliente ${id}: ${response.statusText}`);
-    }
+    await api.delete(`${BASE_PATH}/${id}`);
   }
 
   /**
    * DELETE definitivo /api/clientes/permanente/{id} - Elimina físicamente el cliente.
-   * Requiere que el backend exponga este endpoint. Si no existe, retornará error.
    */
   async purge(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/permanente/${id}`, { method: 'DELETE' });
-    if (!response.ok) {
-      throw new Error(`Error al eliminar definitivamente cliente ${id}: ${response.status} ${response.statusText}`);
-    }
+    await api.delete(`${BASE_PATH}/permanente/${id}`);
   }
 
   /**
@@ -185,10 +118,10 @@ class ClienteService {
   async permanentDelete(id: string): Promise<void> {
     try {
       await this.purge(id);
-    } catch (e) {
+    } catch (e: unknown) {
       // Si falla por 404/405 intentamos el delete normal
-      const msg = e instanceof Error ? e.message : String(e);
-      if (/404|405/.test(msg)) {
+      // @ts-expect-error - Axios error structure
+      if (e.response && (e.response.status === 404 || e.response.status === 405)) {
         await this.delete(id);
       } else {
         throw e;
@@ -198,15 +131,10 @@ class ClienteService {
 
   /**
    * PATCH /api/clientes/{id}/restaurar - Restaurar / reactivar cliente inactivo
-   * Si tu backend usa otra ruta (p.ej. /activar), ajusta aquí.
    */
   async restore(id: string): Promise<void> {
     // Endpoint real según ClienteController: PUT /api/clientes/{id} (sin body, 204)
-    const response = await fetch(`${API_BASE_URL}/${id}`, { method: 'PUT' });
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Error al restaurar cliente ${id}: ${response.status} ${response.statusText} - ${text}`);
-    }
+    await api.put(`${BASE_PATH}/${id}`);
   }
 
   /**
@@ -225,28 +153,16 @@ class ClienteService {
    * GET /api/clientes/contratos/{id} - Obtener cliente para contrato (Feign client)
    */
   async obtenerParaContrato(id: string): Promise<ClienteContratoDto> {
-    const response = await fetch(`${API_BASE_URL}/contratos/${id}`);
-    if (!response.ok) {
-      throw new Error(`Error al obtener cliente para contrato: ${response.statusText}`);
-    }
-    return response.json();
+    const response = await api.get(`${BASE_PATH}/contratos/${id}`);
+    return response.data;
   }
 
   /**
    * POST /api/clientes/reportes/por-ids - Obtener clientes para reportes
    */
   async obtenerClientesParaReportes(ids: string[]): Promise<ClienteReporteDto[]> {
-    const response = await fetch(`${API_BASE_URL}/reportes/por-ids`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(ids),
-    });
-    if (!response.ok) {
-      throw new Error(`Error al obtener clientes para reportes: ${response.statusText}`);
-    }
-    return response.json();
+    const response = await api.post(`${BASE_PATH}/reportes/por-ids`, ids);
+    return response.data;
   }
 }
 

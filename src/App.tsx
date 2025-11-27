@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import ClientManagement from './pages/ClientManagement';
@@ -6,122 +7,129 @@ import RegisterClient from './pages/RegisterClient';
 import VehicleManagement from './pages/VehicleManagement';
 import ContractManagement from './pages/ContractManagement';
 import CreateContract from './pages/CreateContract';
-import type { ContratoResponseDto } from './types/contract';
 import Reports from './pages/Reports';
 import Login from './pages/Login';
-import type { User } from './types';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
-function App() {
-  const [activeMenu, setActiveMenu] = useState('dashboard');
-  const [user, setUser] = useState<User | null>(null);
-  // Estado para edición de cliente
-  const [editingClientId, setEditingClientId] = useState<string | undefined>(undefined);
-  const [editingClientInitialData, setEditingClientInitialData] = useState<any | undefined>(undefined);
-  // Estado para edición de contrato
-  const [editingContract, setEditingContract] = useState<ContratoResponseDto | null>(null);
+// Layout para las rutas protegidas que incluye el Sidebar
+const Layout = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [user, setUser] = useState({ name: 'Usuario', username: '' });
 
-  const handleMenuClick = (menuId: string) => {
-    setActiveMenu(menuId);
-  };
-
-  const startEditClient = (id: string, initialData: any) => {
-    setEditingClientId(id);
-    setEditingClientInitialData(initialData);
-    setActiveMenu('register-client');
-  };
-
-  const clearEditClient = () => {
-    setEditingClientId(undefined);
-    setEditingClientInitialData(undefined);
-  };
-
-  const startEditContract = (contract: ContratoResponseDto) => {
-    setEditingContract(contract);
-    setActiveMenu('crear-contrato');
-  };
-
-  const clearEditContract = () => {
-    setEditingContract(null);
-  };
-
-  const handleLogin = (username: string, password: string) => {
-    // Credenciales de prueba
-    if (username === 'admin' && password === 'admin123') {
-      setUser({
-        username: username,
-        name: 'Administrador'
-      });
+  useEffect(() => {
+    const storedUser = localStorage.getItem('username');
+    if (storedUser) {
+      setUser({ name: storedUser, username: storedUser });
     }
-  };
+  }, []);
 
   const handleLogout = () => {
-    setUser(null);
-    setActiveMenu('dashboard');
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('roles');
+    navigate('/login');
   };
 
-  // Si no hay usuario autenticado, mostrar Login
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
+  const handleMenuClick = (menuId: string) => {
+    navigate(`/${menuId}`);
+  };
 
-  // Si hay usuario autenticado, mostrar la aplicación
+  // Determinar el menú activo basado en la ruta actual
+  const activeMenu = location.pathname.substring(1) || 'dashboard';
+
   return (
     <div className="app-container">
-      <Sidebar 
-        activeMenu={activeMenu} 
+      <Sidebar
+        activeMenu={activeMenu}
         onMenuClick={handleMenuClick}
         onLogout={handleLogout}
         user={user}
       />
       <main className="main-content">
-  {activeMenu === 'dashboard' && (
-    <Dashboard onNavigate={(menuId: string) => setActiveMenu(menuId)} />
-  )}
-  {activeMenu === 'clientes' && (
-    <ClientManagement 
-      onNavigate={(menuId: string) => setActiveMenu(menuId)}
-      onEditClient={startEditClient}
-    />
-  )}
-  {activeMenu === 'register-client' && (
-    <RegisterClient 
-      onNavigate={(menuId: string) => {
-        setActiveMenu(menuId);
-        if (menuId !== 'register-client') {
-          clearEditClient();
-        }
-      }}
-      clientId={editingClientId}
-      initialData={editingClientInitialData}
-    />
-  )}
-          {activeMenu === 'vehiculos' && (
-            <VehicleManagement />
-          )}
-          {activeMenu === 'agregar-vehiculo' && (
-            <VehicleManagement startAdding={true} />
-          )}
-        {activeMenu === 'contratos' && (
-          <ContractManagement 
-            onNavigate={(menuId: string) => setActiveMenu(menuId)}
-            onStartEditContract={(c) => startEditContract(c)}
-          />
-        )}
-        {activeMenu === 'crear-contrato' && (
-          <CreateContract 
-            onNavigate={(menuId: string) => {
-              setActiveMenu(menuId);
-              if (menuId !== 'crear-contrato') {
-                clearEditContract();
-              }
-            }}
-            contractToEdit={editingContract ?? undefined}
-          />
-        )}
-        {activeMenu === 'reportes' && <Reports />}
+        <Outlet />
       </main>
     </div>
+  );
+};
+
+function App() {
+  const navigate = useNavigate();
+  const [editingContract, setEditingContract] = useState<any>(null);
+  const [editingClient, setEditingClient] = useState<{id: string, data: any} | null>(null);
+
+  const handleNavigate = (menuId: string) => {
+    // Limpiar estados de edición al navegar a formularios de creación
+    if (menuId === 'register-client') {
+      setEditingClient(null);
+    }
+    if (menuId === 'crear-contrato') {
+      setEditingContract(null);
+    }
+    navigate(`/${menuId}`);
+  };
+
+  const handleStartEditContract = (contract: any) => {
+    setEditingContract(contract);
+    navigate('/crear-contrato');
+  };
+
+  const handleStartEditClient = (id: string, data: any) => {
+    setEditingClient({ id, data });
+    navigate('/register-client');
+  };
+
+  return (
+    <Routes>
+      {/* Ruta pública de Login */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Rutas protegidas */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard onNavigate={handleNavigate} />} />
+          
+          {/* Página de gestión de vehículos real */}
+          <Route path="/vehiculos" element={<VehicleManagement />} />
+          <Route path="/agregar-vehiculo" element={<VehicleManagement startAdding={true} />} />
+
+          {/* Otras rutas existentes mapeadas */}
+          <Route path="/clientes" element={
+            <ClientManagement 
+              onNavigate={handleNavigate} 
+              onEditClient={handleStartEditClient} 
+            />
+          } />
+          <Route path="/contratos" element={
+            <ContractManagement 
+              onNavigate={handleNavigate} 
+              onStartEditContract={handleStartEditContract} 
+            />
+          } />
+          <Route path="/reportes" element={<Reports />} />
+          
+          {/* Rutas adicionales para mantener compatibilidad básica */}
+          <Route path="/register-client" element={
+            <RegisterClient 
+              onNavigate={handleNavigate} 
+              clientId={editingClient?.id}
+              initialData={editingClient?.data}
+            />
+          } />
+          <Route path="/crear-contrato" element={
+            <CreateContract 
+              onNavigate={handleNavigate} 
+              contractToEdit={editingContract}
+            />
+          } />
+        </Route>
+      </Route>
+
+      {/* Redirección por defecto */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }
 

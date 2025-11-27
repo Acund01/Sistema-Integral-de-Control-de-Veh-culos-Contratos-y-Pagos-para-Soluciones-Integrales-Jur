@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tabler/icons-react": "^3.35.0",
+    "axios": "^1.13.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4"
