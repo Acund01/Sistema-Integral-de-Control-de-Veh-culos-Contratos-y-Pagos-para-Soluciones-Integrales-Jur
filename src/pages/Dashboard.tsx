@@ -186,24 +186,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     // Aquí puedes agregar la lógica para ver detalles de la alerta
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('roles');
-    window.location.href = '/login';
-  };
-
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 className="dashboard-title">Dashboard Principal</h1>
-            <p className="dashboard-subtitle">Resumen general del sistema de gestión de alquileres</p>
-          </div>
-          <button onClick={handleLogout} style={{ padding: '10px', backgroundColor: '#ff4444', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-            Cerrar Sesión
-          </button>
+        <div>
+          <h1 className="dashboard-title">Dashboard Principal</h1>
+          <p className="dashboard-subtitle">Resumen general del sistema de gestión de alquileres</p>
         </div>
       </div>
 
