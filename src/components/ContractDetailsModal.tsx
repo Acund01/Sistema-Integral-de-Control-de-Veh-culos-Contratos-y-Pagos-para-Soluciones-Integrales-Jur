@@ -216,9 +216,6 @@ const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({ contract, o
 
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>Cerrar</button>
-          {onEdit && (
-            <button className="btn-primary" onClick={() => onEdit(contractData)}>Editar</button>
-          )}
           {isFinalizable && (
             <button className="btn-primary" onClick={handleFinalizarContrato}>Finalizar Contrato</button>
           )}

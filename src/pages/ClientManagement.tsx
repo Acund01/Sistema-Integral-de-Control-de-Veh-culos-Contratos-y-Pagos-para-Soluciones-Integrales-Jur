@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import ClientCard from '../components/ClientCard';
 import ClientDetailsModal from '../components/ClientDetailsModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -31,10 +32,12 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ onNavigate, onEditC
     onConfirm: () => {},
   });
 
+  const location = useLocation();
+
   // Cargar clientes al montar el componente
   useEffect(() => {
     loadClients();
-  }, []);
+  }, [location.key]);
 
   const loadClients = async () => {
     try {

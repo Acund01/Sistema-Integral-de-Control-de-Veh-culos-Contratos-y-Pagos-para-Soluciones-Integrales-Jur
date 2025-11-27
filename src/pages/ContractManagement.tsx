@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import ContractCard from '../components/ContractCard';
 import ContractDetailsModal from '../components/ContractDetailsModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -31,6 +32,8 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
     message: '',
     onConfirm: () => {},
   });
+
+  const location = useLocation();
 
   // Si nos pasan contratos por props, sincronizamos una sola vez o cuando cambie realmente el array
   useEffect(() => {
@@ -65,7 +68,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigate, con
       load();
     }
     return () => { cancelled = true; };
-  }, [contracts]);
+  }, [contracts, location.key]);
 
   // Cálculo de estadísticas dinámicas según contratos recibidos
   const stats: ContractStats = useMemo(() => {

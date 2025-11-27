@@ -60,11 +60,11 @@ function App() {
   const [editingClient, setEditingClient] = useState<{id: string, data: any} | null>(null);
 
   const handleNavigate = (menuId: string) => {
-    // Limpiar estados de edición al navegar a formularios de creación
-    if (menuId === 'register-client') {
+    // Limpiar estados de edición al navegar a formularios de creación o listados
+    if (menuId === 'register-client' || menuId === 'clientes') {
       setEditingClient(null);
     }
-    if (menuId === 'crear-contrato') {
+    if (menuId === 'crear-contrato' || menuId === 'contratos') {
       setEditingContract(null);
     }
     navigate(`/${menuId}`);

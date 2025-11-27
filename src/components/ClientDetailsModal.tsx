@@ -212,9 +212,6 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ client, onClose
               {fullClient.activo ? 'Inactivar' : 'Activar'}
             </button>
           )}
-          {onEdit && (
-            <button className="btn-primary" onClick={() => onEdit(fullClient)}>Editar</button>
-          )}
           {onDelete && (
             <button className="btn-danger" onClick={handleDelete}>Eliminar</button>
           )}

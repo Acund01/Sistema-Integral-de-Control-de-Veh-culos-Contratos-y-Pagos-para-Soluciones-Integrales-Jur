@@ -19,12 +19,13 @@ interface CreateContractProps {
 
 
 
-type InsuranceKey = '' | 'basico' | 'completo';
+type InsuranceKey = '' | 'basico' | 'completo' | 'ninguno';
 
 const INSURANCE_LABEL: Record<InsuranceKey, string> = {
   '': 'Seleccionar seguro',
   'basico': 'Básico',
   'completo': 'Completo',
+  'ninguno': 'Sin seguro',
 };
 
 const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, contractToEdit, clients: clientsProp = [], vehicles: vehiclesProp = [] }) => {
@@ -191,6 +192,7 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
         const val = o.replace(/^Seguro:\s*/i, '').toLowerCase();
         if (val.includes('básico') || val.includes('basico')) setInsurance('basico');
         else if (val.includes('completo')) setInsurance('completo');
+        else if (val.includes('sin seguro') || val.includes('ninguno')) setInsurance('ninguno');
       } else if (/^Depósito:\s*S\/.?/i.test(o)) {
         const num = o.replace(/^Depósito:\s*S\/.?\s*/i, '').replace(/[,]/g,'');
         const parsed = Number(num);

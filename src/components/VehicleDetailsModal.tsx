@@ -166,9 +166,6 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
                         {vehicle.activo ? 'Inactivar' : 'Activar'}
                       </button>
                     )}
-          {onEdit && (
-            <button className="btn-primary" onClick={() => onEdit(vehicle)}>Editar</button>
-          )}
           {onDelete && (
             <button className="btn-danger" onClick={handleDelete}>Eliminar</button>
           )}
