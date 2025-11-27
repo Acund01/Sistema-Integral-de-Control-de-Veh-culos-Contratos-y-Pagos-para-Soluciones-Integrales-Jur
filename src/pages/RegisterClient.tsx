@@ -140,6 +140,19 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
       if (!data.razonSocial?.trim()) err.razonSocial = 'Razón Social es obligatorio';
       if (!data.ruc?.trim()) err.ruc = 'RUC es obligatorio';
       else if (!/^\d{11}$/.test(data.ruc)) err.ruc = 'RUC debe tener 11 dígitos';
+      
+      // Validación de contacto de empresa
+      if (!data.correo?.trim()) err.correo = 'Correo de la empresa es obligatorio';
+      else if (!emailRegex.test(data.correo)) err.correo = 'Correo no es válido';
+
+      if (!data.telefono?.trim()) {
+        err.telefono = 'Teléfono de la empresa es obligatorio';
+      } else if (data.telefono.length < 9) {
+        err.telefono = 'Teléfono debe tener al menos 9 caracteres';
+      } else if (!phoneRegex.test(data.telefono)) {
+        err.telefono = 'Teléfono no válido';
+      }
+
       if (!data.representanteNombres?.trim()) err.representanteNombres = 'Nombres del representante es obligatorio';
       if (!data.representanteApellidos?.trim()) err.representanteApellidos = 'Apellidos del representante es obligatorio';
       if (!data.representanteTipoDocumento) err.representanteTipoDocumento = 'Seleccione tipo de documento';
@@ -511,6 +524,30 @@ const RegisterClient: React.FC<RegisterClientProps> = ({ onNavigate, onAddClient
 
             <section className="form-section">
               <h3 className="section-title">📬 Información de Contacto Adicional</h3>
+              <div className="field-row">
+                <div className="field-col">
+                  <label>Correo de la Empresa *</label>
+                  <input
+                    name="correo"
+                    value={form.correo}
+                    onChange={handleChange}
+                    placeholder="contacto@empresa.com"
+                    type="email"
+                    required
+                  />
+                </div>
+                <div className="field-col">
+                  <label>Teléfono de la Empresa *</label>
+                  <input
+                    name="telefono"
+                    value={form.telefono}
+                    onChange={handleChange}
+                    placeholder="+51 1 234-5678"
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="field-row">
                 <div className="field-col">
                   <label>Dirección</label>
