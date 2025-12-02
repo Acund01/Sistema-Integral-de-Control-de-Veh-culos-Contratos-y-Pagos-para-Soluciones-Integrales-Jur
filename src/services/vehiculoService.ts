@@ -46,13 +46,40 @@ class VehiculoService {
 
   /** POST /api/vehiculos */
   async create(dto: CrearVehiculoDto): Promise<Vehiculo> {
-    const res = await api.post(BASE_PATH, dto);
+    // El backend espera JSON en el cuerpo (@RequestBody)
+    const vehiculoDto = {
+      placa: dto.placa,
+      modeloId: Number(dto.modeloId),
+      tipoVehiculoId: Number(dto.tipoVehiculoId),
+      anioFabricacion: Number(dto.anioFabricacion),
+      combustible: dto.combustible,
+      descripcion: dto.descripcion
+    };
+    const res = await api.post(BASE_PATH, vehiculoDto);
+    return res.data;
+  }
+
+  /** PUT /api/vehiculos/{id}/imagen */
+  async uploadImage(id: string, file: File): Promise<Vehiculo> {
+    const formData = new FormData();
+    formData.append('file', file); // El backend espera @RequestParam("file")
+    const res = await api.put(`${BASE_PATH}/${id}/imagen`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return res.data;
   }
 
   /** PUT /api/vehiculos/{id} */
   async update(id: string, dto: ActualizarVehiculoDto): Promise<Vehiculo> {
-    const res = await api.put(`${BASE_PATH}/${id}`, dto);
+    const vehiculoDto = {
+      placa: dto.placa,
+      modeloId: Number(dto.modeloId),
+      tipoVehiculoId: Number(dto.tipoVehiculoId),
+      anioFabricacion: Number(dto.anioFabricacion),
+      combustible: dto.combustible,
+      descripcion: dto.descripcion
+    };
+    const res = await api.put(`${BASE_PATH}/${id}`, vehiculoDto);
     return res.data;
   }
 
@@ -102,6 +129,12 @@ class VehiculoService {
   /** GET /api/modelos - listado de modelos con su marca */
   async listarModelos(): Promise<Modelo[]> {
     const res = await api.get(`${ROOT_PATH}/modelos`);
+    return res.data;
+  }
+
+  /** GET /api/marcas - listado de marcas */
+  async listarMarcas(): Promise<Marca[]> {
+    const res = await api.get(`${ROOT_PATH}/marcas`);
     return res.data;
   }
 

@@ -3,7 +3,7 @@ import VehicleCard from '../components/VehicleCard';
 import VehicleDetailsModal from '../components/VehicleDetailsModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../styles/VehicleManagement.css';
-import type { Vehiculo, VehicleStats, EstadoVehiculo, TipoCombustible, CrearVehiculoDto, ActualizarVehiculoDto, Modelo, TipoVehiculo as TipoVehiculoEntity } from '../types/vehicle';
+import type { Vehiculo, VehicleStats, EstadoVehiculo, TipoCombustible, CrearVehiculoDto, ActualizarVehiculoDto, Modelo, Marca, TipoVehiculo as TipoVehiculoEntity } from '../types/vehicle';
 import { vehiculoService } from '../services/vehiculoService';
 
 
@@ -23,6 +23,7 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [modelos, setModelos] = useState<Modelo[]>([]);
+  const [marcas, setMarcas] = useState<Marca[]>([]);
   const [tiposVehiculo, setTiposVehiculo] = useState<TipoVehiculoEntity[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState<boolean>(false);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
@@ -41,20 +42,24 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
 
   interface NewVehicleForm {
     placa: string;
+    marcaId: string;
     modeloId: string;
     tipoVehiculoId: string;
     anioFabricacion: string;
     combustible: '' | TipoCombustible;
     descripcion: string;
+    imagen: File | null;
   }
 
   const [newVehicle, setNewVehicle] = useState<NewVehicleForm>({
     placa: '',
+    marcaId: '',
     modeloId: '',
     tipoVehiculoId: '',
     anioFabricacion: new Date().getFullYear().toString(),
     combustible: '',
     descripcion: '',
+    imagen: null,
   });
 
   // Estado del inventario mostrado
@@ -79,12 +84,13 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
     }
   }, [vehicles]);
 
-  // Cargar catálogos de Modelos y Tipos de Vehículo
+  // Cargar catálogos de Modelos, Marcas y Tipos de Vehículo
   useEffect(() => {
     setCatalogsLoading(true);
     setCatalogsError(null);
     Promise.allSettled([
       vehiculoService.listarModelos().then(setModelos),
+      vehiculoService.listarMarcas().then(setMarcas),
       vehiculoService.listarTiposVehiculo().then(setTiposVehiculo),
     ])
       .then((results) => {
@@ -93,6 +99,13 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
       })
       .finally(() => setCatalogsLoading(false));
   }, []);
+
+  // Filtrar modelos según la marca seleccionada
+  const filteredModelos = useMemo(() => {
+    if (!newVehicle.marcaId) return [];
+    // Aseguramos que la comparación sea robusta (string vs string)
+    return modelos.filter(m => m.marca?.id && String(m.marca.id) === String(newVehicle.marcaId));
+  }, [modelos, newVehicle.marcaId]);
 
   // Cálculo de estadísticas a partir del inventario actual
   const stats: VehicleStats = useMemo(() => {
@@ -125,7 +138,18 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
 
   const handleAddChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setNewVehicle((prev) => ({ ...prev, [name]: value }));
+    setNewVehicle((prev) => {
+      if (name === 'marcaId') {
+        return { ...prev, marcaId: value, modeloId: '' };
+      }
+      return { ...prev, [name]: value };
+    });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setNewVehicle(prev => ({ ...prev, imagen: e.target.files![0] }));
+    }
   };
 
   const handleAddSubmit = async (e: React.FormEvent) => {
@@ -143,7 +167,17 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
         if (onUpdateVehicle) {
           onUpdateVehicle(editingVehicleId, dto as unknown as Partial<Vehiculo>);
         } else {
-          const updated = await vehiculoService.update(editingVehicleId, dto);
+          let updated = await vehiculoService.update(editingVehicleId, dto);
+          
+          // Si hay nueva imagen, subirla
+          if (newVehicle.imagen) {
+            try {
+              updated = await vehiculoService.uploadImage(editingVehicleId, newVehicle.imagen);
+            } catch (imgErr) {
+              console.error("Error actualizando imagen", imgErr);
+            }
+          }
+
           setItems(prev => prev.map(v => v.id === editingVehicleId ? updated : v));
         }
       } else {
@@ -154,14 +188,30 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
           anioFabricacion: parseInt(newVehicle.anioFabricacion, 10),
           combustible: newVehicle.combustible as TipoCombustible,
           descripcion: newVehicle.descripcion || undefined,
+          imagen: newVehicle.imagen || undefined,
         };
         if (onAddVehicle) {
           // Si un padre quiere manejarlo, se lo pasamos (necesitará recargar)
           // @ts-expect-error compatibilidad externa
           onAddVehicle(dto);
         } else {
+          // 1. Crear el vehículo (JSON)
           const created = await vehiculoService.create(dto);
-          setItems((prev) => [created, ...prev]);
+          
+          // 2. Si hay imagen, subirla (Multipart)
+          if (dto.imagen) {
+            try {
+              const updatedWithImage = await vehiculoService.uploadImage(created.id, dto.imagen);
+              setItems((prev) => [updatedWithImage, ...prev]);
+            } catch (imgErr) {
+              console.error("Error subiendo imagen", imgErr);
+              // Si falla la imagen, mostramos el vehículo creado pero sin imagen
+              setItems((prev) => [created, ...prev]);
+              // Opcional: Notificar al usuario que la imagen falló
+            }
+          } else {
+            setItems((prev) => [created, ...prev]);
+          }
         }
       }
     } catch (err: unknown) {
@@ -177,7 +227,7 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
     setIsAdding(false);
     setEditingVehicleId(null);
     // limpiar formulario
-    setNewVehicle({ placa: '', modeloId: '', tipoVehiculoId: '', anioFabricacion: new Date().getFullYear().toString(), combustible: '', descripcion: '' });
+    setNewVehicle({ placa: '', marcaId: '', modeloId: '', tipoVehiculoId: '', anioFabricacion: new Date().getFullYear().toString(), combustible: '', descripcion: '', imagen: null });
   };
 
   const handleAddCancel = () => {
@@ -328,16 +378,32 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
             <h3 className="section-title">Información del Vehículo</h3>
             <div className="field-row">
               <div className="field-col">
-                <label>Modelo *</label>
-                <select name="modeloId" value={newVehicle.modeloId} onChange={handleAddChange} required>
-                  <option value="">Seleccionar modelo</option>
-                  {modelos.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.marca?.nombre ? `${m.marca.nombre} ` : ''}{m.nombre}
-                    </option>
+                <label>Marca *</label>
+                <select name="marcaId" value={newVehicle.marcaId} onChange={handleAddChange} required>
+                  <option value="">Seleccionar marca</option>
+                  {marcas.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nombre}</option>
                   ))}
                 </select>
               </div>
+              <div className="field-col">
+                <label>Modelo *</label>
+                <select 
+                  name="modeloId" 
+                  value={newVehicle.modeloId} 
+                  onChange={handleAddChange} 
+                  required
+                  disabled={!newVehicle.marcaId}
+                >
+                  <option value="">{newVehicle.marcaId ? 'Seleccionar modelo' : 'Seleccione una marca primero'}</option>
+                  {filteredModelos.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nombre}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="field-row">
               <div className="field-col">
                 <label>Tipo de Vehículo *</label>
                 <select name="tipoVehiculoId" value={newVehicle.tipoVehiculoId} onChange={handleAddChange} required>
@@ -347,21 +413,18 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
                   ))}
                 </select>
               </div>
-            </div>
-
-            <div className="field-row">
               <div className="field-col">
                 <label>Año *</label>
                 <input name="anioFabricacion" value={newVehicle.anioFabricacion} onChange={handleAddChange} />
               </div>
+            </div>
+
+            <div className="field-row">
               <div className="field-col">
                 <label>Placa *</label>
                 <input name="placa" value={newVehicle.placa} onChange={handleAddChange} placeholder="AQP-123" />
               </div>
-            </div>
-
-            <div className="field-row">
-              <div className="field-col-full">
+              <div className="field-col">
                 <label>Tipo de Combustible</label>
                 <select name="combustible" value={newVehicle.combustible} onChange={handleAddChange}>
                   <option value="">Seleccionar combustible</option>
@@ -371,6 +434,38 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ startAdding = fal
                   <option value="ELECTRICO">Eléctrico</option>
                   <option value="GLP">GLP</option>
                 </select>
+              </div>
+            </div>
+
+            <div className="field-row">
+              <div className="field-col-full">
+                <label>Imagen del Vehículo</label>
+                <div className="file-upload-wrapper">
+                  <input 
+                    type="file" 
+                    id="vehicle-image" 
+                    accept="image/*" 
+                    onChange={handleFileChange} 
+                    className="file-input-hidden" 
+                  />
+                  <label htmlFor="vehicle-image" className="file-upload-label">
+                    <div className="upload-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                    </div>
+                    <span className="upload-text">
+                      {newVehicle.imagen ? newVehicle.imagen.name : 'Haz clic para subir una imagen'}
+                    </span>
+                  </label>
+                  {newVehicle.imagen && (
+                    <div className="image-preview">
+                      <img src={URL.createObjectURL(newVehicle.imagen)} alt="Vista previa" />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

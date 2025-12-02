@@ -28,6 +28,7 @@ export interface Vehiculo {
   anioFabricacion: number;
   combustible: TipoCombustible;
   descripcion?: string;
+  imagenUrl?: string;
   creadoEn: string;
   estado: EstadoVehiculo;
   activo: boolean;
@@ -41,6 +42,7 @@ export interface CrearVehiculoDto {
   anioFabricacion: number;
   combustible: TipoCombustible;
   descripcion?: string;
+  imagen?: File;
 }
 
 export type ActualizarVehiculoDto = CrearVehiculoDto;

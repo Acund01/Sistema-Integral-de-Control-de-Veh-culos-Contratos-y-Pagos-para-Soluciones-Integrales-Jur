@@ -24,17 +24,16 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
   }, []);
 
   const getStatusBadge = () => {
-    // Si está inactivo no mostramos estado operativo, solo inactivo
     if (!vehicle.activo) {
       return <span className="status-badge inactivo">Inactivo</span>;
     }
     switch (vehicle.estado as EstadoVehiculo) {
       case 'DISPONIBLE':
-        return <span className="status-badge disponible">✓ Disponible</span>;
+        return <span className="status-badge disponible">Disponible</span>;
       case 'ALQUILADO':
-        return <span className="status-badge alquilado">⏱ Alquilado</span>;
+        return <span className="status-badge alquilado">Alquilado</span>;
       case 'MANTENIMIENTO':
-        return <span className="status-badge mantenimiento">⚠ Mantenimiento</span>;
+        return <span className="status-badge mantenimiento">Mantenimiento</span>;
       default:
         return null;
     }
@@ -53,72 +52,119 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onViewDetails, onEdi
 
   return (
     <div className="vehicle-card">
-      <div className="vehicle-header">
-        <div className="vehicle-title">
-          <span className="vehicle-icon">
-           <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-car-suv" width="30" height="30" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M5 17a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path>
-                    <path d="M16 17a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path>
-                    <path d="M5 9l2 -4h7.438a2 2 0 0 1 1.94 1.515l.622 2.485h3a2 2 0 0 1 2 2v3"></path>
-                    <path d="M10 9v-4"></path>
-                    <path d="M2 7v4"></path>
-                    <path d="M22.001 14.001a4.992 4.992 0 0 0 -4.001 -2.001a4.992 4.992 0 0 0 -4 2h-3a4.998 4.998 0 0 0 -8.003 .003"></path>
-                    <path d="M5 12v-3h13"></path>
-                </svg>
-          </span>
+      <div className="vehicle-image-container">
+        {vehicle.imagenUrl ? (
+          <>
+            <div 
+              className="vehicle-image-bg"
+              style={{ backgroundImage: `url('${vehicle.imagenUrl}')` }}
+            />
+            <img 
+              src={vehicle.imagenUrl} 
+              alt={`${vehicle.modelo?.marca?.nombre} ${vehicle.modelo?.nombre}`} 
+              className="vehicle-image"
+            />
+          </>
+        ) : (
+          <div className="vehicle-placeholder">
+            <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-car" width="64" height="64" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <circle cx="7" cy="17" r="2" />
+              <circle cx="17" cy="17" r="2" />
+              <path d="M5 17h-2v-6l2 -5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6 -6h15m-6 0v-5" />
+            </svg>
+          </div>
+        )}
+        <div className="vehicle-status-overlay">
+          {getStatusBadge()}
+        </div>
+      </div>
+
+      <div className="vehicle-content">
+        <div className="vehicle-header-info">
           <h3 className="vehicle-name">{vehicle.modelo?.marca?.nombre} {vehicle.modelo?.nombre}</h3>
+          <span className="vehicle-plate">{vehicle.placa}</span>
         </div>
-        {getStatusBadge()}
-      </div>
 
-      <div className="vehicle-details-grid">
-        <div className="detail-row">
-          <span className="detail-label">Tipo</span>
-          <span className="detail-value">{vehicle.tipoVehiculo?.nombre}</span>
+        <div className="vehicle-details-grid">
+          <div className="detail-item">
+            <svg xmlns="http://www.w3.org/2000/svg" className="detail-icon" width="16" height="16" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 3" />
+            </svg>
+            <span>{vehicle.anioFabricacion}</span>
+          </div>
+          <div className="detail-item">
+            <svg xmlns="http://www.w3.org/2000/svg" className="detail-icon" width="16" height="16" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M6 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+              <path d="M18 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+              <path d="M4 17h-2v-11a1 1 0 0 1 1 -1h14a5 7 0 0 1 5 7v5h-2m-4 0h-8" />
+            </svg>
+            <span>{vehicle.tipoVehiculo?.nombre}</span>
+          </div>
+          <div className="detail-item">
+            <svg xmlns="http://www.w3.org/2000/svg" className="detail-icon" width="16" height="16" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M6 21h12" />
+              <path d="M12 21v-10" />
+              <path d="M12 11a5 5 0 0 1 5 -5v-2a2 2 0 0 0 -4 0" />
+              <path d="M12 11a5 5 0 0 0 -5 -5v-2a2 2 0 0 1 4 0" />
+            </svg>
+            <span>{prettyFuel(vehicle.combustible)}</span>
+          </div>
         </div>
-        <div className="detail-row">
-          <span className="detail-label">Año</span>
-          <span className="detail-value">{vehicle.anioFabricacion}</span>
-        </div>
-        <div className="detail-row">
-          <span className="detail-label">Placa</span>
-          <span className="detail-value">{vehicle.placa}</span>
-        </div>
-        <div className="detail-row">
-          <span className="detail-label">Combustible</span>
-          <span className="detail-value">{prettyFuel(vehicle.combustible)}</span>
-        </div>
-      </div>
 
-      <div className="vehicle-maintenance">
-        <span className="maintenance-icon">📅</span>
-        <span className="maintenance-text">Creado: {new Date(vehicle.creadoEn).toLocaleDateString()}</span>
-      </div>
-
-      <div className="vehicle-actions">
-        <button className="btn-details" onClick={onViewDetails}>
-          Ver Detalles
-        </button>
-        <div className="vehicle-menu-wrapper" ref={menuRef}>
-          <button className="btn-menu" onClick={() => setOpenMenu(v => !v)} aria-haspopup="menu" aria-expanded={openMenu}>
-            ⋯
+        <div className="vehicle-actions">
+          <button className="btn-action primary" onClick={onViewDetails}>
+            Ver Detalles
           </button>
-          {openMenu && (
-            <div className="vehicle-menu" role="menu">
-              <button className="vehicle-menu-item" role="menuitem" onClick={() => { onEditVehicle?.(vehicle); setOpenMenu(false); }}>
-                <span className="menu-icon">✏️</span>
-                Editar vehículo
-              </button>
-                <button className="vehicle-menu-item danger" role="menuitem" onClick={() => {
-                  onDeleteVehicle?.(vehicle.id);
-                  setOpenMenu(false);
-                }}>
-                  <span className="menu-icon">🗑️</span>
-                  {vehicle.activo ? 'Desactivar vehículo' : 'Eliminar (inactivo)'}
-                </button>
-            </div>
-          )}
+          
+          <div className="menu-container" ref={menuRef}>
+            <button className="btn-action icon-only" onClick={() => setOpenMenu(!openMenu)}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="19" r="1" />
+                <circle cx="12" cy="5" r="1" />
+              </svg>
+            </button>
+            
+            {openMenu && (
+              <div className="dropdown-menu">
+                {onEditVehicle && (
+                  <button className="dropdown-item" onClick={() => {
+                    onEditVehicle(vehicle);
+                    setOpenMenu(false);
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <path d="M4 20h4l10.5 -10.5a1.5 1.5 0 0 0 -4 -4l-10.5 10.5v4" />
+                      <line x1="13.5" y1="6.5" x2="17.5" y2="10.5" />
+                    </svg>
+                    Editar
+                  </button>
+                )}
+                {onDeleteVehicle && (
+                  <button className="dropdown-item danger" onClick={() => {
+                    onDeleteVehicle(vehicle.id);
+                    setOpenMenu(false);
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <line x1="4" y1="7" x2="20" y2="7" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
+                      <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                      <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                    </svg>
+                    Eliminar
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

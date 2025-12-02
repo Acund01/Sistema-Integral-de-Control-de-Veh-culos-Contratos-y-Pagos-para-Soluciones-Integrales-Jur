@@ -82,7 +82,17 @@ const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({ vehicle, onCl
       <div className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="vehicle-details-title">
         <div className="modal-header">
           <div className="modal-title-area">
-            <div className="modal-avatar">🚗</div>
+            <div className="modal-avatar">
+              {vehicle.imagenUrl ? (
+                <img 
+                  src={vehicle.imagenUrl} 
+                  alt="Vehículo" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} 
+                />
+              ) : (
+                '🚗'
+              )}
+            </div>
             <div>
               <h2 id="vehicle-details-title" className="modal-title">{vehicle.modelo?.marca?.nombre} {vehicle.modelo?.nombre}</h2>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
