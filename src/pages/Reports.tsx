@@ -128,7 +128,8 @@ const Reports: React.FC = () => {
           if (endOverlap < monthStart || startOverlap > monthEnd) return acc;
           const days = daysBetweenInclusive(startOverlap, endOverlap);
           const precioDiario = Number(c?.detalles?.[0]?.precioDiario || 0);
-          return acc + days * precioDiario;
+          // Se agrega el IGV (18%) para coincidir con el total del contrato
+          return acc + (days * precioDiario * 1.18);
         }, 0);
         setMonthlyIncome(ingreso);
       } catch {

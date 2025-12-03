@@ -19,6 +19,7 @@ export interface VehiculoDto {
   marca: string;
   modelo: string;
   tipoVehiculo: string;
+  imagenUrl?: string;
 }
 
 export interface DetalleContratoResponseDto {

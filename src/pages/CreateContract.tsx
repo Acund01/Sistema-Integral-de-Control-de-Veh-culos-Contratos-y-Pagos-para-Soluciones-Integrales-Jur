@@ -93,6 +93,8 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
     return Math.ceil(ms / (1000 * 60 * 60 * 24)) + 1;
   }, [startDate, endDate]);
 
+  const selectedVehicle = useMemo(() => vehicles.find(v => v.id === vehicleId), [vehicles, vehicleId]);
+
   const numDaily = typeof dailyRate === 'number' ? dailyRate : 0;
   const depositAmount = typeof deposit === 'number' ? deposit : 0;
 
@@ -239,6 +241,15 @@ const CreateContract: React.FC<CreateContractProps> = ({ onNavigate, onCreate, c
                     <option key={v.id} value={v.id}>{displayVehicleLabel(v)}</option>
                   ))}
                 </select>
+                {selectedVehicle && selectedVehicle.imagenUrl && (
+                  <div style={{ marginTop: '12px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                    <img 
+                      src={selectedVehicle.imagenUrl} 
+                      alt={`${selectedVehicle.marca} ${selectedVehicle.modelo}`} 
+                      style={{ width: '100%', height: '180px', objectFit: 'cover', display: 'block' }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </section>

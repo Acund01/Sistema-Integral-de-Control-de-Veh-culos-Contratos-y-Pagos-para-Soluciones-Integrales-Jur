@@ -88,7 +88,20 @@ const ContractCard: React.FC<ContractCardProps> = ({ contract, onViewDetails, on
         <div className="contract-detail-row">
           <div className="detail-item">
             <span className="detail-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-car-suv" width="26" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              {contract.detalles?.[0]?.vehiculo?.imagenUrl ? (
+                <img 
+                  src={contract.detalles[0].vehiculo.imagenUrl} 
+                  alt="Vehículo" 
+                  style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    borderRadius: '6px', 
+                    objectFit: 'cover',
+                    marginTop: '-4px' // Ajuste visual para alinear con el texto
+                  }}
+                />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-car-suv" width="26" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                     <path d="M5 17a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path>
                     <path d="M16 17a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path>
@@ -98,6 +111,7 @@ const ContractCard: React.FC<ContractCardProps> = ({ contract, onViewDetails, on
                     <path d="M22.001 14.001a4.992 4.992 0 0 0 -4.001 -2.001a4.992 4.992 0 0 0 -4 2h-3a4.998 4.998 0 0 0 -8.003 .003"></path>
                     <path d="M5 12v-3h13"></path>
                 </svg>
+              )}
             </span>
             <div className="detail-content">
               <span className="detail-label">Vehículo</span>
